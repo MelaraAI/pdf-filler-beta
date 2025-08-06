@@ -9,7 +9,7 @@ import ThemeToggle from '@/app/components/theme-toggle';
 import ThemeCustomizer from '@/app/components/theme-customizer';
 import FileUploadPreview from './FileUploadPreview';
 import AutoFillInstructions from './AutoFillInstructions';
-import SupabaseFileDropdown from './SupabaseFileDropdown';
+import SupabaseFileDropdown from './SupabaseFileDropdown'; 
 
 interface FormField {
   id: string;
