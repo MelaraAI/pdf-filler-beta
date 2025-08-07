@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -36,46 +36,35 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [sent, setSent] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setIsLoading(true)
-  setErrorMessage("")
+    e.preventDefault()
+    setIsLoading(true)
+    setErrorMessage("")
 
-  const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
-if (!allowedEmails.includes(email.trim().toLowerCase())) {
-  setErrorMessage("Access denied. Please enter the correct email to continue.");
-  setIsLoading(false);
-  return;
-}
+    const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
+    if (!allowedEmails.includes(email.trim().toLowerCase())) {
+      setErrorMessage("Access denied. Please enter the correct email to continue.");
+      setIsLoading(false);
+      return;
+    }
 
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-  // Get the current origin dynamically
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const redirectUrl = `${origin}/auth/confirm`
-  
-  // Log the redirect URL for debugging
-  console.log("🔁 Redirect URL sent to Supabase:", redirectUrl)
+    if (!error) {
+      router.push("/agent")
+    } else {
+      setErrorMessage("Invalid email or password. Please try again.")
+    }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { 
-      shouldCreateUser: true,
-      emailRedirectTo: redirectUrl,
-    },
-  })
-
-  if (!error) {
-    setSent(true)
-  } else {
-    setErrorMessage("Error sending magic link. Please try again.")
+    setIsLoading(false)
   }
-
-  setIsLoading(false)
-}
 
 
   // ✅ Redirect once the user is logged in via magic link
@@ -139,25 +128,12 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
           </motion.div>
         )}
 
-        {sent ? (
-          <motion.div
-            className="text-center space-y-4"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-green-400 bg-green-900/20 px-4 py-3 rounded-xl border border-green-500/30">
-              ✅ Magic link sent! Check your email and click the link to continue.
-            </div>
-          </motion.div>
-        ) : (
-          <>
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+        >
               <Label htmlFor="email" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                 Email
               </Label>
@@ -183,16 +159,23 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
               <Label htmlFor="password" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                 Password
               </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }}>
+              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }} className="relative">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
+                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
+                >
+                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                </button>
               </motion.div>
               <motion.div
                 className="text-right"
@@ -234,7 +217,7 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Magic Link...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging in...
                   </>
                 ) : (
                   "Login"
@@ -260,8 +243,6 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
                 </button>
               </p>
             </motion.div>
-          </>
-        )}
       </form>
     </motion.div>
   )
