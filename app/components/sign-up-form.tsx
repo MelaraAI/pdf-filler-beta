@@ -25,13 +25,13 @@ interface ColorTheme {
   background: string
 }
 
-interface LoginFormProps {
+interface SignUpFormProps {
   onCancelAction: () => void
-  onSignUpRedirect?: () => void
+  onLoginRedirectAction: () => void
   colorTheme: ColorTheme
 }
 
-export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme }: LoginFormProps) {
+export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colorTheme }: SignUpFormProps) {
   const { theme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
@@ -41,42 +41,40 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setIsLoading(true)
-  setErrorMessage("")
+    e.preventDefault()
+    setIsLoading(true)
+    setErrorMessage("")
 
-  const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
-if (!allowedEmails.includes(email.trim().toLowerCase())) {
-  setErrorMessage("Access denied. Please enter the correct email to continue.");
-  setIsLoading(false);
-  return;
-}
+    const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
+    if (!allowedEmails.includes(email.trim().toLowerCase())) {
+      setErrorMessage("Access denied. Please enter the correct email to continue.");
+      setIsLoading(false);
+      return;
+    }
 
+    // Get the current origin dynamically
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const redirectUrl = `${origin}/auth/confirm`
+    
+    // Log the redirect URL for debugging
+    console.log("🔁 Redirect URL sent to Supabase:", redirectUrl)
 
-  // Get the current origin dynamically
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const redirectUrl = `${origin}/auth/confirm`
-  
-  // Log the redirect URL for debugging
-  console.log("🔁 Redirect URL sent to Supabase:", redirectUrl)
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { 
+        shouldCreateUser: true,
+        emailRedirectTo: redirectUrl,
+      },
+    })
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { 
-      shouldCreateUser: true,
-      emailRedirectTo: redirectUrl,
-    },
-  })
+    if (!error) {
+      setSent(true)
+    } else {
+      setErrorMessage("Error sending magic link. Please try again.")
+    }
 
-  if (!error) {
-    setSent(true)
-  } else {
-    setErrorMessage("Error sending magic link. Please try again.")
+    setIsLoading(false)
   }
-
-  setIsLoading(false)
-}
-
 
   // ✅ Redirect once the user is logged in via magic link
   useEffect(() => {
@@ -124,7 +122,7 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </motion.div>
-        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Login to Access</h2>
+        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Create Account</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -189,27 +187,10 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="Create a password"
                   required
                   className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
                 />
-              </motion.div>
-              <motion.div
-                className="text-right"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <button
-                  type="button"
-                  className={`text-sm underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-                  onClick={() => {
-                    // Add forgot password logic here
-                    console.log("Forgot password clicked")
-                  }}
-                >
-                  Forgot password?
-                </button>
               </motion.div>
             </motion.div>
 
@@ -234,15 +215,15 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Magic Link...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating Account...
                   </>
                 ) : (
-                  "Login"
+                  "Create Account"
                 )}
               </Button>
             </motion.div>
             
-            {/* Sign-up link */}
+            {/* Login link */}
             <motion.div
               className="text-center mt-4"
               initial={{ opacity: 0 }}
@@ -250,13 +231,13 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
               transition={{ delay: 0.4, duration: 0.5 }}
             >
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                Don&apos;t have an account?{' '}
+                Already have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => onSignUpRedirect?.()}
+                  onClick={() => onLoginRedirectAction?.()}
                   className={`font-medium underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
                 >
-                  Sign up
+                  Login
                 </button>
               </p>
             </motion.div>

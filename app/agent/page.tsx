@@ -124,10 +124,10 @@ function VoiceAgentContent() {
       <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
 
       <div className="relative z-10">
-        <header className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+        <header className="w-full px-1 py-6">
+          <div className="flex items-center justify-between w-full">
             <motion.div
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 ml-4"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, type: "spring", damping: 20 }}
@@ -145,7 +145,7 @@ function VoiceAgentContent() {
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 mr-4"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}

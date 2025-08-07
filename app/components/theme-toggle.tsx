@@ -26,7 +26,7 @@ export default function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="rounded-full border border-white/20 dark:border-white/20 border-slate-300/50 backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
+      className="zyflo-hover rounded-full border border-white/20 dark:border-white/20 border-slate-300/50 backdrop-blur-sm hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
       <motion.div
@@ -49,7 +49,10 @@ export default function ThemeToggle() {
         transition={{ duration: 0.2 }}
         className="absolute"
       >
-        <Sun className="h-5 w-5 text-white dark:text-white text-slate-700" />
+        <Sun 
+          className="h-5 w-5 dark:text-white" 
+          style={{ color: theme === "dark" ? "white" : "#333333" }}
+        />
       </motion.div>
     </Button>
   )

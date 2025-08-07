@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Palette, X, Check } from "lucide-react"
+import { useTheme } from "next-themes"
 
 interface ColorTheme {
   name: string
@@ -65,6 +66,7 @@ interface ThemeCustomizerProps {
 
 export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: ThemeCustomizerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const { theme } = useTheme()
 
   return (
     <>
@@ -76,7 +78,11 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
       >
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 p-3 shadow-lg hover:shadow-xl hover:shadow-indigo-500/20"
+          className="rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300"
+          style={{
+            background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.secondary})`,
+            boxShadow: `0 10px 30px ${currentTheme.primary}20`
+          }}
           size="icon"
         >
           <Palette className="h-5 w-5 text-white" />
@@ -94,19 +100,29 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              className="fixed right-4 top-1/2 z-50 w-80 -translate-y-1/2 rounded-3xl bg-white/10 dark:bg-white/10 bg-white/90 p-6 backdrop-blur-lg border border-white/20 dark:border-white/20 border-slate-200/50"
+              className="fixed right-4 top-1/2 z-50 w-80 -translate-y-1/2 rounded-3xl p-6 backdrop-blur-lg border transition-all duration-300"
+              style={{
+                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.9)",
+                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)"
+              }}
               initial={{ x: 100, opacity: 0, scale: 0.9 }}
               animate={{ x: 0, opacity: 1, scale: 1 }}
               exit={{ x: 100, opacity: 0, scale: 0.9 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-white dark:text-white text-slate-900">Color Themes</h3>
+                <h3 
+                  className="text-lg font-semibold"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  Color Themes
+                </h3>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-full text-white dark:text-white text-slate-600 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
+                  className="rounded-full hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -153,7 +169,10 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
                 ))}
               </div>
 
-              <div className="mt-4 text-xs text-slate-400 dark:text-slate-400 text-slate-600">
+              <div 
+                className="mt-4 text-xs"
+                style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
+              >
                 Choose a color theme to customize your experience
               </div>
             </motion.div>
