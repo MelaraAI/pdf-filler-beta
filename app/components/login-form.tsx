@@ -58,7 +58,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     })
 
     if (!error) {
-      router.push("/agent")
+      router.push("/pdf-components/dashboard")
     } else {
       setErrorMessage("Invalid email or password. Please try again.")
     }
@@ -72,7 +72,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession()
       if (data.session) {
-        router.push("/agent")
+        router.push("/pdf-components/dashboard")
       }
     }
 
@@ -82,7 +82,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     // Listen for future auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push("/agent")
+        router.push("/pdf-components/dashboard")
       }
     })
 

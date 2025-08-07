@@ -39,6 +39,7 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordsMatch, setPasswordsMatch] = useState(true)
   const [sent, setSent] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
@@ -80,7 +81,7 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession()
       if (data.session) {
-        router.push("/agent")
+        router.push("/pdf-components/dashboard")
       }
     }
 
@@ -90,7 +91,7 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
     // Listen for future auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push("/agent")
+        router.push("/pdf-components/dashboard")
       }
     })
 
@@ -185,7 +186,15 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    // Check if passwords match when typing in password field
+                    if (confirmPassword && e.target.value) {
+                      setPasswordsMatch(e.target.value === confirmPassword)
+                    } else {
+                      setPasswordsMatch(true)
+                    }
+                  }}
                   placeholder="Create a password"
                   required
                   className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
@@ -214,10 +223,24 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
+                    // Check if passwords match when typing
+                    if (password && e.target.value) {
+                      setPasswordsMatch(password === e.target.value)
+                    } else {
+                      setPasswordsMatch(true)
+                    }
+                  }}
+                  onBlur={() => {
+                    // Final check when user leaves the field
+                    if (password && confirmPassword) {
+                      setPasswordsMatch(password === confirmPassword)
+                    }
+                  }}
                   placeholder="Confirm your password"
                   required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
+                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300 ${!passwordsMatch && confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                 />
                 <button
                   type="button"
@@ -227,6 +250,16 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
                   {showConfirmPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                 </button>
               </motion.div>
+              {!passwordsMatch && confirmPassword && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-red-500 text-sm mt-1 flex items-center gap-1"
+                >
+                  <span>⚠️</span> Passwords do not match
+                </motion.div>
+              )}
             </motion.div>
 
             <motion.div
