@@ -42,7 +42,7 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        router.push("/agent");
+        router.push("/pdf-components/dashboard");
       }
     };
 
@@ -52,7 +52,7 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
     // Listen for future auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push("/agent");
+        router.push("/pdf-components/dashboard");
       }
     });
 

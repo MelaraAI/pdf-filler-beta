@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!exchangeError) {
-      redirect("/agent")
+      redirect("/pdf-components/dashboard")
     } else {
       redirect(`/auth/error?error=${encodeURIComponent(exchangeError?.message || 'Session exchange failed')}`)
     }

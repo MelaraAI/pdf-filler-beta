@@ -47,7 +47,7 @@ export default function Home() {
       setLoading(false);
 
       if (data.user) {
-        router.push("/agent");
+        router.push("/pdf-components/dashboard");
       }
     };
 
@@ -177,7 +177,7 @@ export default function Home() {
                       backgroundImage: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
                     }}
                   >
-                    Voice Assistant
+                    PDF Form Filler
                   </span>
                 </motion.div>
 
@@ -190,7 +190,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1.5 }}
                 >
-                  Experience the future of voice interaction with our AI-powered assistant. Please log in to access your personalized voice agent.
+                  Experience the future of PDF form filling with our AI-powered assistant. Please log in to access your personalized PDF dashboard.
                 </motion.p>
 
                 <motion.div

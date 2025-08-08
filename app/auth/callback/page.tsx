@@ -13,7 +13,7 @@ export default function AuthCallbackPage() {
       const { data } = await supabase.auth.getSession()
 
       if (data.session) {
-        router.push("/agent")
+        router.push("/pdf-components/dashboard")
       } else {
         router.push("/auth/error?error=Unable to log in")
       }
