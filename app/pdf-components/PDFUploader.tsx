@@ -22,35 +22,129 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
 
   const uploadToSupabase = async (file: File) => {
     try {
-      if (!session) {
-        console.error('No active session found');
+      // Step 1 - Check if you're actually signed in using the context
+      console.log('=== DEBUGGING AUTHENTICATION STATUS ===');
+      console.log('Context User:', user);
+      console.log('Context Session:', session);
+      console.log('Is Authenticated:', isAuthenticated);
+      
+      // Use the context authentication instead of making a separate call
+      if (!user || !session) {
+        console.error('❌ You are not authenticated - RLS will always fail');
+        console.error('User from context:', user);
+        console.error('Session from context:', session);
         alert('You must be logged in to upload files. Please log in and try again.');
         return;
+      } else {
+        console.log('✅ Authentication successful from context - user.id:', user.id);
       }
 
       const supabase = createClient();
       
+      // Set the session explicitly on the client if it's not picking it up from cookies
+      if (session) {
+        console.log('Setting session on Supabase client...');
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+      }
+      
       console.log('Attempting to upload file to Supabase...', file.name);
-      console.log('Session found, user authenticated:', session.user.id);
+      console.log('User authenticated:', user.id);
       
-      const filePath = `${session.user.id}/${file.name}`;
-      console.log('Uploading to path:', filePath);
+      // Step 2 - Attempt the upload with detailed logging
+      const uploadPath = `${user.id}/${file.name}`;
+      console.log('=== UPLOAD ATTEMPT ===');
+      console.log('Upload path:', uploadPath);
+      console.log('File size:', file.size);
+      console.log('File type:', file.type);
+      console.log('Bucket: user-documents');
       
-      const { data, error } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('user-documents')
-        .upload(filePath, file);
+        .upload(uploadPath, file);
 
-      if (error) {
-        console.error('Error uploading to Supabase:', error);
-        alert(`Upload failed: ${error.message}`);
+      console.log('=== UPLOAD RESULT ===');
+      console.log('Upload data:', uploadData);
+      console.log('Upload error:', uploadError);
+
+      if (uploadError) {
+        console.error('❌ Upload failed:', uploadError);
+        console.error('Error message:', uploadError.message);
+        console.error('Full error object:', JSON.stringify(uploadError, null, 2));
+        alert(`Upload failed: ${uploadError.message}`);
       } else {
-        console.log('File uploaded to user-documents successfully!');
-        console.log('Upload data:', data);
+        console.log('✅ File uploaded to user-documents successfully!');
+        console.log('Upload data:', uploadData);
         alert('File uploaded successfully!');
       }
     } catch (error) {
       console.error('Error uploading to Supabase:', error);
       alert('An unexpected error occurred during upload.');
+    }
+  };
+
+  // Debug function to check authentication status manually
+  const debugAuthStatus = async () => {
+    const supabase = createClient();
+    console.log('=== MANUAL AUTH DEBUG ===');
+    
+    console.log('--- Context Authentication ---');
+    console.log('Context User:', user);
+    console.log('Context Session:', session);
+    console.log('Is Authenticated:', isAuthenticated);
+    
+    console.log('--- Supabase Client Authentication (Before Session Set) ---');
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    console.log('Supabase Auth Data:', authData);
+    console.log('Supabase Auth Error:', authError);
+    
+    // Try setting the session manually if we have one
+    if (session && !authData?.user) {
+      console.log('--- Attempting to Set Session Manually ---');
+      try {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+        console.log('✅ Session set successfully');
+        
+        // Check again after setting session
+        const { data: newAuthData, error: newAuthError } = await supabase.auth.getUser();
+        console.log('--- After Setting Session ---');
+        console.log('New Auth Data:', newAuthData);
+        console.log('New Auth Error:', newAuthError);
+        
+        if (newAuthData?.user) {
+          console.log('✅ Supabase client now shows user authenticated with ID:', newAuthData.user.id);
+        } else {
+          console.log('❌ Still no authenticated user after setting session');
+        }
+      } catch (error) {
+        console.error('❌ Error setting session:', error);
+      }
+    }
+    
+    console.log('--- Comparison ---');
+    if (user && session) {
+      console.log('✅ Context shows user authenticated with ID:', user.id);
+    } else {
+      console.log('❌ Context shows no authenticated user');
+    }
+    
+    if (authData?.user) {
+      console.log('✅ Supabase client shows user authenticated with ID:', authData.user.id);
+    } else {
+      console.log('❌ Supabase client shows no authenticated user');
+    }
+    
+    // Check if they match
+    if (user?.id === authData?.user?.id) {
+      console.log('✅ Context and Supabase client match!');
+    } else {
+      console.log('⚠️  Context and Supabase client DO NOT match!');
+      console.log('This suggests a session/cookie issue');
     }
   };
 
@@ -118,6 +212,22 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
                 : 'Upload PDF File'
             }
           </div>
+        </Button>
+      </motion.div>
+      
+      {/* Debug Button - Remove this after debugging */}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        className="mt-4"
+      >
+        <Button 
+          onClick={debugAuthStatus}
+          variant="outline"
+          className="text-sm px-4 py-2 rounded-lg font-medium border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300"
+        >
+          Debug Auth Status (Check Console)
         </Button>
       </motion.div>
       
