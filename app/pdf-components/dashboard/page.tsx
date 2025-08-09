@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, LogOut } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/theme-toggle';
 import ThemeCustomizer from '@/app/components/theme-customizer';
-import FileUploadPreview from './FileUploadPreview';
+import UserAvatar from '@/app/components/UserAvatar';
+import FileUploadPreview, { FileUploadPreviewRef } from './FileUploadPreview';
 import AutoFillInstructions from './AutoFillInstructions';
 import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDropdown'; 
 
@@ -39,6 +40,7 @@ function App() {
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const instructionsRef = useRef('');
   const dropdownRef = useRef<SupabaseFileDropdownRef>(null);
+  const fileUploadRef = useRef<FileUploadPreviewRef>(null);
   const { signOut, user, session, isLoading } = useAuth();
   const router = useRouter();
 
@@ -79,8 +81,8 @@ function App() {
   }, []);
 
   const handlePdfLoad = useCallback((file: File) => {
+    // This is called when a file is uploaded through the FileUploadPreview component
     setPdfFile(file);
-    // Reset filled fields when new PDF is loaded
     setFilledFields([]);
   }, []);
 
@@ -89,6 +91,19 @@ function App() {
     if (dropdownRef.current) {
       dropdownRef.current.refresh();
     }
+  }, []);
+
+  const handleFileSelect = useCallback((file: File) => {
+    // This is called when a file is selected from the dropdown
+    // Use the FileUploadPreview ref to load the file with the same flow as upload
+    if (fileUploadRef.current) {
+      fileUploadRef.current.loadFile(file);
+    }
+  }, []);
+
+  const handleFieldsExtracted = useCallback((fields: FormField[]) => {
+    // Handle extracted fields - could be used for auto-fill functionality
+    console.log('Fields extracted:', fields);
   }, []);
 
   const downloadPDF = useCallback(() => {
@@ -211,19 +226,10 @@ function App() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="flex items-center space-x-2 px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border-2"
-                style={{
-                  borderColor: colorTheme.accent,
-                  color: colorTheme.accent,
-                  background: 'rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </Button>
+              <UserAvatar 
+                colorTheme={colorTheme}
+                onLogout={handleLogout}
+              />
             </motion.div>
           </div>
         </div>
@@ -244,8 +250,10 @@ function App() {
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             <FileUploadPreview 
+              ref={fileUploadRef}
               onPdfLoad={handlePdfLoad}
               onPdfUpload={handlePdfUpload}
+              onFieldsExtracted={handleFieldsExtracted}
               filledFields={filledFields}
               colorTheme={colorTheme}
             />
@@ -279,7 +287,7 @@ function App() {
               <SupabaseFileDropdown
                 ref={dropdownRef}
                 colorTheme={colorTheme}
-                onFileSelect={handlePdfLoad}
+                onFileSelect={handleFileSelect}
               />
             </motion.div>
           </motion.div>

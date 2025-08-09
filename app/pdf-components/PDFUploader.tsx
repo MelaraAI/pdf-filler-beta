@@ -59,6 +59,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
       console.log('Upload path:', uploadPath);
       console.log('File size:', file.size);
       console.log('File type:', file.type);
+      console.log('File name:', file.name);
       console.log('Bucket: user-documents');
       
       const { data: uploadData, error: uploadError } = await supabase.storage
