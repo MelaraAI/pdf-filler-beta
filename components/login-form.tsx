@@ -26,10 +26,34 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleMagicLink = (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dummy magic link - bypass auth for testing
-    router.push("/pdf-components/dashboard");
+    
+    if (!email) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/pdf-components/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+      
+      setError("Check your email for the login link!");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {

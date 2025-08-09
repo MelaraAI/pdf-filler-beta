@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { motion } from 'framer-motion';
-import { FileDown, RefreshCw, Download } from 'lucide-react';
+import { FileDown, RefreshCw, Download, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface SupabaseFile {
   id: string;
@@ -11,6 +12,10 @@ interface SupabaseFile {
   created_at: string;
   updated_at: string;
   size: number;
+}
+
+export interface SupabaseFileDropdownRef {
+  refresh: () => void;
 }
 
 interface SupabaseFileDropdownProps {
@@ -22,19 +27,32 @@ interface SupabaseFileDropdownProps {
   onFileSelect?: (file: File) => void;
 }
 
-export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: SupabaseFileDropdownProps) {
+const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDropdownProps>(({ colorTheme, onFileSelect }, ref) => {
   const [files, setFiles] = useState<SupabaseFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<string>('');
   const [downloadingFileId, setDownloadingFileId] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
+  const { session } = useAuth();
+
+  // Expose refresh function via ref
+  useImperativeHandle(ref, () => ({
+    refresh: fetchFiles,
+  }));
 
   const fetchFiles = async () => {
     const supabase = createClient();
     setLoading(true);
     try {
+      if (!session) {
+        console.error('No active session found');
+        setFiles([]);
+        return;
+      }
+
       const { data, error } = await supabase.storage
-        .from('pdf-files')
-        .list('', {
+        .from('user-documents')
+        .list(session.user.id, {
           limit: 100,
           offset: 0,
           sortBy: { column: 'created_at', order: 'desc' }
@@ -67,9 +85,15 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
     const supabase = createClient();
     setDownloadingFileId(fileName);
     try {
+      if (!session) {
+        console.error('No active session found');
+        return;
+      }
+
+      const filePath = `${session.user.id}/${fileName}`;
       const { data, error } = await supabase.storage
-        .from('pdf-files')
-        .download(fileName);
+        .from('user-documents')
+        .download(filePath);
 
       if (error) {
         console.error('Error downloading file:', error);
@@ -89,14 +113,73 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
     }
   };
 
+  const uploadToSupabase = async (file: File) => {
+    try {
+      setUploading(true);
+      
+      if (!session) {
+        console.error('No active session found');
+        alert('You must be logged in to upload files. Please log in and try again.');
+        return;
+      }
+
+      const supabase = createClient();
+      
+      console.log('Attempting to upload file to Supabase...', file.name);
+      console.log('Session found, user authenticated:', session.user.id);
+      
+      const filePath = `${session.user.id}/${file.name}`;
+      console.log('Uploading to path:', filePath);
+      
+      const { data, error } = await supabase.storage
+        .from('user-documents')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Error uploading to Supabase:', error);
+        alert(`Upload failed: ${error.message}`);
+      } else {
+        console.log('File uploaded to user-documents successfully!');
+        console.log('Upload data:', data);
+        alert('File uploaded successfully!');
+        // Refresh the file list after successful upload
+        fetchFiles();
+      }
+    } catch (error) {
+      console.error('Error uploading to Supabase:', error);
+      alert('An unexpected error occurred during upload.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        uploadToSupabase(file);
+      } else {
+        alert('Please select a valid PDF file.');
+      }
+    }
+  };
+
   useEffect(() => {
     const loadFiles = async () => {
-      const supabase = createClient();
-      setLoading(true);
+      // Don't set loading during initial load
       try {
+        if (!session) {
+          console.log('No active session found, clearing files');
+          setFiles([]);
+          return;
+        }
+
+        const supabase = createClient();
+
         const { data, error } = await supabase.storage
-          .from('pdf-files')
-          .list('', {
+          .from('user-documents')
+          .list(session.user.id, {
             limit: 100,
             offset: 0,
             sortBy: { column: 'created_at', order: 'desc' }
@@ -118,13 +201,11 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
         setFiles(filesWithMetadata);
       } catch (error) {
         console.error('Error fetching files:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadFiles();
-  }, []);
+  }, [session]); // Re-run when session changes
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -144,7 +225,7 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 dark:border-slate-700/30 p-6"
+      className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 dark:border-slate-700/30 p-6 h-full flex flex-col"
     >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
@@ -154,23 +235,46 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
           />
           Retrieve Uploaded Files
         </h3>
-        <button
-          onClick={fetchFiles}
-          disabled={loading}
-          className="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105"
-          style={{
-            backgroundColor: `${colorTheme?.secondary || '#64748b'}20`,
-            borderColor: `${colorTheme?.secondary || '#64748b'}30`,
-            color: colorTheme?.secondary || '#64748b'
-          }}
-        >
-          <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <label htmlFor="file-upload-dropdown" className="cursor-pointer">
+            <div
+              className="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105"
+              style={{
+                backgroundColor: `${colorTheme?.primary || '#3b82f6'}20`,
+                borderColor: `${colorTheme?.primary || '#3b82f6'}30`,
+                color: colorTheme?.primary || '#3b82f6'
+              }}
+            >
+              <Upload className={`w-4 h-4 mr-1 ${uploading ? 'animate-spin' : ''}`} />
+              {uploading ? 'Uploading...' : 'Upload'}
+            </div>
+          </label>
+          <input
+            id="file-upload-dropdown"
+            type="file"
+            accept=".pdf,application/pdf"
+            onChange={handleFileUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          <button
+            onClick={fetchFiles}
+            disabled={loading}
+            className="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105"
+            style={{
+              backgroundColor: `${colorTheme?.secondary || '#64748b'}20`,
+              borderColor: `${colorTheme?.secondary || '#64748b'}30`,
+              color: colorTheme?.secondary || '#64748b'
+            }}
+          >
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
+      <div className="space-y-4 flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Select a file to load:
           </label>
@@ -227,4 +331,8 @@ export default function SupabaseFileDropdown({ colorTheme, onFileSelect }: Supab
       </div>
     </motion.div>
   );
-}
+});
+
+SupabaseFileDropdown.displayName = 'SupabaseFileDropdown';
+
+export default SupabaseFileDropdown;

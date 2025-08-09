@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface PDFUploaderProps {
   onUpload: (file: File) => void;
@@ -15,25 +16,41 @@ interface PDFUploaderProps {
 
 export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
   const [uploading, setUploading] = useState(false);
+  const { user, session } = useAuth();
+
+  const isAuthenticated = !!session && !!user;
 
   const uploadToSupabase = async (file: File) => {
     try {
+      if (!session) {
+        console.error('No active session found');
+        alert('You must be logged in to upload files. Please log in and try again.');
+        return;
+      }
+
       const supabase = createClient();
-      const fileName = `${Date.now()}-${file.name}`;
       
-      const { error } = await supabase.storage
-        .from('pdf-files')
-        .upload(fileName, file);
+      console.log('Attempting to upload file to Supabase...', file.name);
+      console.log('Session found, user authenticated:', session.user.id);
+      
+      const filePath = `${session.user.id}/${file.name}`;
+      console.log('Uploading to path:', filePath);
+      
+      const { data, error } = await supabase.storage
+        .from('user-documents')
+        .upload(filePath, file);
 
       if (error) {
         console.error('Error uploading to Supabase:', error);
-        // Still proceed with local upload even if Supabase upload fails
+        alert(`Upload failed: ${error.message}`);
       } else {
-        console.log('File uploaded to Supabase successfully:', fileName);
+        console.log('File uploaded to user-documents successfully!');
+        console.log('Upload data:', data);
+        alert('File uploaded successfully!');
       }
     } catch (error) {
       console.error('Error uploading to Supabase:', error);
-      // Still proceed with local upload even if Supabase upload fails
+      alert('An unexpected error occurred during upload.');
     }
   };
 
@@ -44,13 +61,17 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
         setUploading(true);
         
-        // Upload to Supabase in the background
-        uploadToSupabase(file);
-        
-        // Still call the original onUpload for immediate preview
-        onUpload(file);
-        
-        setUploading(false);
+        try {
+          // Upload to Supabase in the background
+          await uploadToSupabase(file);
+          
+          // Still call the original onUpload for immediate preview
+          onUpload(file);
+        } catch (error) {
+          console.error('Error in file upload process:', error);
+        } finally {
+          setUploading(false);
+        }
       } else {
         alert('Please select a valid PDF file.');
       }
@@ -80,23 +101,31 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
       >
         <Button 
-          asChild
+          onClick={() => document.getElementById('file-upload')?.click()}
           className="text-white px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border border-white/10 disabled:opacity-50"
           style={{
             background: `linear-gradient(to right, ${colorTheme?.primary || '#3b82f6'}, ${colorTheme?.secondary || '#6366f1'})`,
             '--hover-bg': `linear-gradient(to right, ${colorTheme?.primary || '#1d4ed8'}, ${colorTheme?.secondary || '#4f46e5'})`
           } as React.CSSProperties}
-          disabled={uploading}
+          disabled={uploading || !isAuthenticated}
         >
-          <label htmlFor="file-upload" className="cursor-pointer flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Upload className={`w-5 h-5 ${uploading ? 'animate-spin' : ''}`} />
-            {uploading ? 'Uploading...' : 'Upload PDF File'}
-          </label>
+            {!isAuthenticated 
+              ? 'Please Log In' 
+              : uploading 
+                ? 'Uploading...' 
+                : 'Upload PDF File'
+            }
+          </div>
         </Button>
       </motion.div>
       
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-        Select a PDF file with form fields to get started
+        {!isAuthenticated 
+          ? 'You must be logged in to upload files'
+          : 'Select a PDF file with form fields to get started'
+        }
       </p>
       
       <input
@@ -105,7 +134,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         accept=".pdf,application/pdf"
         onChange={handleFileChange}
         className="hidden"
-        disabled={uploading}
+        disabled={uploading || !isAuthenticated}
       />
     </motion.div>
   );

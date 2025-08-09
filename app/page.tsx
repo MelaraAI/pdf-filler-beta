@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -18,11 +16,6 @@ import ParticleField from "@/app/components/particle-field";
 import AnimatedText from "@/app/components/animated-text";
 import ZyfloCursor from "@/app/components/zyflo/mouse-style";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const defaultTheme = {
   name: "Ocean",
   primary: "#4f46e5",
@@ -37,22 +30,18 @@ export default function Home() {
   const [showSignUp, setShowSignUp] = useState(false);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
-  // 🧠 Login check + redirect
+  // Check loading state only - no auto redirect
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
+      console.log("[HOME PAGE DEBUG] Loading home page - no authentication required");
+      // Just check loading state, don't auto-redirect
       setLoading(false);
-
-      if (data.user) {
-        router.push("/pdf-components/dashboard");
-      }
     };
 
     checkUser();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("colorTheme");
@@ -67,12 +56,15 @@ export default function Home() {
   };
 
   if (loading) {
+    console.log("[HOME PAGE DEBUG] Still loading home page...");
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
         <p className="text-lg">Checking login status...</p>
       </main>
     );
   }
+
+  console.log("[HOME PAGE DEBUG] Home page loaded - showing main interface");
 
   return (
     <div
@@ -144,7 +136,10 @@ export default function Home() {
                 style={{
                   color: theme === "dark" ? "white" : "#333333"
                 }}
-                onClick={() => setShowLogin(true)}
+                                    onClick={() => {
+                      console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
+                      setShowLogin(true);
+                    }}
               >
                 Login
               </Button>
@@ -204,7 +199,10 @@ export default function Home() {
                       background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
                       boxShadow: `0 10px 30px ${colorTheme.primary}20`,
                     }}
-                    onClick={() => setShowSignUp(true)}
+                    onClick={() => {
+                      console.log("[HOME PAGE DEBUG] Get Started button clicked - showing signup form");
+                      setShowSignUp(true);
+                    }}
                   >
                     Get Started <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -241,7 +239,8 @@ export default function Home() {
                     setShowLogin(false)
                     setShowSignUp(true)
                   }}
-                  colorTheme={colorTheme} 
+                  colorTheme={colorTheme}
+                  preventAutoRedirect={true}
                 />
               </motion.div>
             )}

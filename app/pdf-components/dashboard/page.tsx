@@ -2,14 +2,15 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-//import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/theme-toggle';
 import ThemeCustomizer from '@/app/components/theme-customizer';
 import FileUploadPreview from './FileUploadPreview';
 import AutoFillInstructions from './AutoFillInstructions';
-import SupabaseFileDropdown from './SupabaseFileDropdown'; 
+import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDropdown'; 
 
 interface FormField {
   id: string;
@@ -37,7 +38,9 @@ function App() {
   const [filledFields, setFilledFields] = useState<FormField[]>([]);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const instructionsRef = useRef('');
-  //const router = useRouter();
+  const dropdownRef = useRef<SupabaseFileDropdownRef>(null);
+  const { signOut, user, session, isLoading } = useAuth();
+  const router = useRouter();
 
   // Load saved theme
   useEffect(() => {
@@ -46,6 +49,23 @@ function App() {
       setColorTheme(JSON.parse(saved));
     }
   }, []);
+
+  // Authentication check - redirect if not authenticated
+  useEffect(() => {
+    console.log("[DASHBOARD DEBUG] Auth state check:", {
+      isLoading,
+      hasSession: !!session,
+      hasUser: !!user,
+      userEmail: user?.email || "No user"
+    });
+    
+    if (!isLoading && !session && !user) {
+      console.log("[DASHBOARD DEBUG] Not authenticated - redirecting to home");
+      router.push('/');
+    } else if (session && user) {
+      console.log("[DASHBOARD DEBUG] User authenticated - allowing access to dashboard");
+    }
+  }, [isLoading, session, user, router]);
 
   const handleThemeChange = (newTheme: typeof defaultTheme) => {
     setColorTheme(newTheme);
@@ -64,6 +84,13 @@ function App() {
     setFilledFields([]);
   }, []);
 
+  const handlePdfUpload = useCallback(() => {
+    // Refresh the dropdown to show newly uploaded files
+    if (dropdownRef.current) {
+      dropdownRef.current.refresh();
+    }
+  }, []);
+
   const downloadPDF = useCallback(() => {
     const link = document.createElement('a');
     link.href = 'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCg==';
@@ -71,9 +98,42 @@ function App() {
     link.click();
   }, []);
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut();
+      
+      // Force redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Unexpected error during logout:', error);
+      alert('An unexpected error occurred during logout.');
+    }
+  }, [signOut]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    console.log("[DASHBOARD DEBUG] Still loading auth state...");
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't render the dashboard content
+  if (!session || !user) {
+    console.log("[DASHBOARD DEBUG] No session or user - blocking access to dashboard content");
+    return null;
+  }
+
+  console.log("[DASHBOARD DEBUG] User authenticated - rendering dashboard content");
+
   return (
     <div 
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full"
       style={{
         background: `linear-gradient(135deg, ${colorTheme.primary}08, ${colorTheme.secondary}08, ${colorTheme.accent}08)`,
       }}
@@ -146,6 +206,25 @@ function App() {
                 <span>Download PDF</span>
               </Button>
             </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="flex items-center space-x-2 px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border-2"
+                style={{
+                  borderColor: colorTheme.accent,
+                  color: colorTheme.accent,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </Button>
+            </motion.div>
           </div>
         </div>
       </motion.header>
@@ -166,6 +245,7 @@ function App() {
           >
             <FileUploadPreview 
               onPdfLoad={handlePdfLoad}
+              onPdfUpload={handlePdfUpload}
               filledFields={filledFields}
               colorTheme={colorTheme}
             />
@@ -179,6 +259,7 @@ function App() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <motion.div
+              className="h-[calc(50%-12px)]"
               whileHover={{ scale: 1.01 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
@@ -191,10 +272,12 @@ function App() {
             </motion.div>
             
             <motion.div
+              className="h-[calc(50%-12px)]"
               whileHover={{ scale: 1.01 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
               <SupabaseFileDropdown
+                ref={dropdownRef}
                 colorTheme={colorTheme}
                 onFileSelect={handlePdfLoad}
               />
@@ -209,4 +292,6 @@ function App() {
   );
 }
 
-export default App;
+export default function ProtectedDashboard() {
+  return <App />;
+}

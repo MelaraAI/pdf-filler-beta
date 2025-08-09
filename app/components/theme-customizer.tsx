@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Palette, X, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Palette, X, Check, Plus } from "lucide-react"
 import { useTheme } from "next-themes"
 
 interface ColorTheme {
@@ -57,6 +59,49 @@ const colorThemes: ColorTheme[] = [
     accent: "#ff0080",
     background: "from-slate-950 to-gray-950",
   },
+  // New themes
+  {
+    name: "Amber",
+    primary: "#f59e0b",
+    secondary: "#f97316",
+    accent: "#84cc16",
+    background: "from-amber-950 to-orange-950",
+  },
+  {
+    name: "Ice",
+    primary: "#06b6d4",
+    secondary: "#60a5fa",
+    accent: "#a78bfa",
+    background: "from-slate-950 to-blue-950",
+  },
+  {
+    name: "Lime",
+    primary: "#22c55e",
+    secondary: "#84cc16",
+    accent: "#06b6d4",
+    background: "from-emerald-950 to-lime-950",
+  },
+  {
+    name: "Magma",
+    primary: "#ef4444",
+    secondary: "#f97316",
+    accent: "#f43f5e",
+    background: "from-red-950 to-amber-950",
+  },
+  {
+    name: "Candy",
+    primary: "#fb7185",
+    secondary: "#a78bfa",
+    accent: "#f472b6",
+    background: "from-pink-950 to-fuchsia-950",
+  },
+  {
+    name: "Midnight",
+    primary: "#6366f1",
+    secondary: "#22d3ee",
+    accent: "#f59e0b",
+    background: "from-slate-950 to-gray-950",
+  },
 ]
 
 interface ThemeCustomizerProps {
@@ -66,7 +111,23 @@ interface ThemeCustomizerProps {
 
 export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: ThemeCustomizerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [customColors, setCustomColors] = useState({
+    primary: "#4f46e5",
+    secondary: "#06b6d4", 
+    accent: "#0891b2"
+  })
   const { theme } = useTheme()
+
+  const handleCustomTheme = () => {
+    const customTheme: ColorTheme = {
+      name: "Custom",
+      primary: customColors.primary,
+      secondary: customColors.secondary,
+      accent: customColors.accent,
+      background: "from-slate-950 to-gray-950"
+    }
+    onThemeChangeAction(customTheme)
+  }
 
   return (
     <>
@@ -100,7 +161,7 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              className="fixed right-4 top-1/2 z-50 w-80 -translate-y-1/2 rounded-3xl p-6 backdrop-blur-lg border transition-all duration-300"
+              className="fixed right-4 top-4 z-50 w-96 max-h-[100vh] rounded-3xl p-6 backdrop-blur-lg border transition-all duration-300 overflow-hidden flex flex-col"
               style={{
                 backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.9)",
                 borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)"
@@ -110,7 +171,7 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
               exit={{ x: 100, opacity: 0, scale: 0.9 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between flex-shrink-0">
                 <h3 
                   className="text-lg font-semibold"
                   style={{ color: theme === "dark" ? "white" : "#333333" }}
@@ -128,52 +189,168 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {colorThemes.map((colorTheme, index) => (
-                  <motion.button
-                    key={colorTheme.name}
-                    className={`relative overflow-hidden rounded-xl p-4 text-left transition-all ${
-                      currentTheme.name === colorTheme.name
-                        ? "ring-2 ring-white ring-offset-2 ring-offset-transparent"
-                        : ""
-                    }`}
-                    style={{
-                      background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
-                    }}
-                    onClick={() => onThemeChangeAction(colorTheme)}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div className="relative z-10">
-                      <div className="mb-2 text-sm font-medium text-white">{colorTheme.name}</div>
-                      <div className="flex gap-1">
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.primary }} />
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.secondary }} />
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.accent }} />
+              {/* Custom Theme Creator */}
+              <div className="mb-6 p-4 rounded-2xl border flex-shrink-0"
+                style={{
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(148, 163, 184, 0.1)",
+                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(148, 163, 184, 0.2)"
+                }}
+              >
+                <h4 className="text-sm font-medium mb-3"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  Create Custom Theme
+                </h4>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs" 
+                        style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
+                      >
+                        Primary
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          value={customColors.primary}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, primary: e.target.value }))}
+                          className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={customColors.primary}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, primary: e.target.value }))}
+                          className="text-xs h-8 flex-1"
+                          style={{
+                            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.8)",
+                            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)",
+                            color: theme === "dark" ? "white" : "#333333"
+                          }}
+                        />
                       </div>
                     </div>
-                    {currentTheme.name === colorTheme.name && (
-                      <motion.div
-                        className="absolute right-2 top-2"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", damping: 15, stiffness: 300 }}
+                    <div>
+                      <Label className="text-xs"
+                        style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
                       >
-                        <Check className="h-4 w-4 text-white" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-                ))}
+                        Secondary
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          value={customColors.secondary}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, secondary: e.target.value }))}
+                          className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={customColors.secondary}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, secondary: e.target.value }))}
+                          className="text-xs h-8 flex-1"
+                          style={{
+                            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.8)",
+                            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)",
+                            color: theme === "dark" ? "white" : "#333333"
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs"
+                        style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
+                      >
+                        Accent
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="color"
+                          value={customColors.accent}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, accent: e.target.value }))}
+                          className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={customColors.accent}
+                          onChange={(e) => setCustomColors(prev => ({ ...prev, accent: e.target.value }))}
+                          className="text-xs h-8 flex-1"
+                          style={{
+                            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.8)",
+                            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)",
+                            color: theme === "dark" ? "white" : "#333333"
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleCustomTheme}
+                    className="w-full h-8 text-xs rounded-lg"
+                    style={{
+                      background: `linear-gradient(135deg, ${customColors.primary}, ${customColors.secondary})`,
+                      color: "white"
+                    }}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Apply Custom Theme
+                  </Button>
+                </div>
+              </div>
+
+              {/* Predefined Themes */}
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <h4 className="text-sm font-medium mb-3 flex-shrink-0"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  Predefined Themes
+                </h4>
+                <div className="flex-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    {colorThemes.map((colorTheme, index) => (
+                      <motion.button
+                        key={colorTheme.name}
+                        className={`relative overflow-hidden rounded-xl p-4 text-left transition-all ${
+                          currentTheme.name === colorTheme.name
+                            ? "ring-2 ring-white ring-offset-2 ring-offset-transparent"
+                            : ""
+                        }`}
+                        style={{
+                          background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
+                        }}
+                        onClick={() => onThemeChangeAction(colorTheme)}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <div className="relative z-10">
+                          <div className="mb-2 text-sm font-medium text-white">{colorTheme.name}</div>
+                          <div className="flex gap-1">
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.primary }} />
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.secondary }} />
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: colorTheme.accent }} />
+                          </div>
+                        </div>
+                        {currentTheme.name === colorTheme.name && (
+                          <motion.div
+                            className="absolute right-2 top-2"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", damping: 15, stiffness: 300 }}
+                          >
+                            <Check className="h-4 w-4 text-white" />
+                          </motion.div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div 
-                className="mt-4 text-xs"
+                className="mt-4 text-xs flex-shrink-0"
                 style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
               >
-                Choose a color theme to customize your experience
               </div>
             </motion.div>
           </>

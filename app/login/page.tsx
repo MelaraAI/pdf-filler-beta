@@ -37,21 +37,14 @@ if (!allowedEmails.includes(email.trim().toLowerCase())) {
     }
   };
 
-  // ✅ Redirect once the user is logged in via magic link
+  // Only redirect after successful login - no auto-redirects for existing sessions
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        router.push("/pdf-components/dashboard");
-      }
-    };
-
-    // Check right away
-    checkSession();
-
-    // Listen for future auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+    // Only listen for sign in events, don't check existing sessions
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[OLD LOGIN PAGE DEBUG] Auth state changed:", event, session?.user?.email || "No user");
+      // Only redirect on successful sign in
+      if (event === 'SIGNED_IN' && session) {
+        console.log("[OLD LOGIN PAGE DEBUG] User signed in, redirecting to dashboard");
         router.push("/pdf-components/dashboard");
       }
     });

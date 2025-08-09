@@ -18,6 +18,7 @@ export interface FormField {
 
 export interface FileUploadPreviewProps {
   onPdfLoad?: (file: File) => void;
+  onPdfUpload?: () => void; // Called specifically when a file is uploaded, not selected
   onFieldsExtracted?: (fields: FormField[]) => void;
   filledFields?: FormField[];
   colorTheme?: {
@@ -27,7 +28,7 @@ export interface FileUploadPreviewProps {
   };
 }
 
-export default function FileUploadPreview({ onPdfLoad, onFieldsExtracted, filledFields, colorTheme }: FileUploadPreviewProps = {}) {
+export default function FileUploadPreview({ onPdfLoad, onPdfUpload, onFieldsExtracted, filledFields, colorTheme }: FileUploadPreviewProps = {}) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfError, setPdfError] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -359,6 +360,11 @@ export default function FileUploadPreview({ onPdfLoad, onFieldsExtracted, filled
       onPdfLoad(file);
     }
     
+    // Call the upload callback to refresh the dropdown
+    if (onPdfUpload) {
+      onPdfUpload();
+    }
+    
     // Extract form fields
     const extractedFields = await extractFormFields(file);
     
@@ -372,7 +378,7 @@ export default function FileUploadPreview({ onPdfLoad, onFieldsExtracted, filled
   };
 
   return (
-    <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 dark:border-slate-700/30 overflow-hidden flex flex-col min-h-[600px] w-full">
+    <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 dark:border-slate-700/30 overflow-hidden flex flex-col h-full w-full">
       <div className="p-4 bg-gradient-to-r from-white/20 to-white/10 dark:from-slate-800/20 dark:to-slate-800/10 border-b border-white/20 dark:border-slate-700/30 flex-shrink-0">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center">
           <FileText 
@@ -383,7 +389,7 @@ export default function FileUploadPreview({ onPdfLoad, onFieldsExtracted, filled
         </h2>
       </div>
 
-      <div className="flex-1 bg-gradient-to-br from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 flex items-center justify-center p-4 relative min-h-[500px]" ref={containerRef}>
+      <div className="flex-1 bg-gradient-to-br from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 flex items-center justify-center p-4 relative overflow-hidden" ref={containerRef}>
         {!pdfFile ? (
           <PDFUploader onUpload={handleUpload} colorTheme={colorTheme} />
         ) : pdfError ? (

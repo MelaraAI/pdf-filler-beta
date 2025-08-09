@@ -29,9 +29,10 @@ interface LoginFormProps {
   onCancelAction: () => void
   onSignUpRedirect?: () => void
   colorTheme: ColorTheme
+  preventAutoRedirect?: boolean // Add this to prevent auto-redirect when shown as modal
 }
 
-export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme }: LoginFormProps) {
+export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme, preventAutoRedirect = false }: LoginFormProps) {
   const { theme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
@@ -52,14 +53,36 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log("[LOGIN DEBUG] Attempting login for email:", email);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (!error) {
+    if (!error && data.user) {
+      console.log("[LOGIN DEBUG] Login successful!");
+      console.log("[LOGIN DEBUG] User data:", {
+        id: data.user.id,
+        email: data.user.email,
+        emailConfirmed: data.user.email_confirmed_at,
+        lastSignIn: data.user.last_sign_in_at,
+        createdAt: data.user.created_at
+      });
+      console.log("[LOGIN DEBUG] Session data:", {
+        accessToken: data.session?.access_token ? "Present" : "Missing",
+        refreshToken: data.session?.refresh_token ? "Present" : "Missing",
+        expiresAt: data.session?.expires_at
+      });
+      console.log("[LOGIN DEBUG] Redirecting to dashboard");
       router.push("/pdf-components/dashboard")
     } else {
+      console.log("[LOGIN DEBUG] Login failed!");
+      console.log("[LOGIN DEBUG] Error details:", {
+        message: error?.message,
+        status: error?.status,
+        name: error?.name
+      });
       setErrorMessage("Invalid email or password. Please try again.")
     }
 
@@ -67,21 +90,30 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
   }
 
 
-  // ✅ Redirect once the user is logged in via magic link
+  // Only redirect after successful login form submission - no auto-redirects
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (data.session) {
-        router.push("/pdf-components/dashboard")
-      }
+    // Skip all auto-redirects if this is shown as a modal
+    if (preventAutoRedirect) {
+      console.log("[LOGIN DEBUG] Auto-redirect prevented - login form shown as modal");
+      return;
     }
 
-    // Check right away
-    checkSession()
-
-    // Listen for future auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Only listen for auth changes, don't check existing session
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[LOGIN DEBUG] Auth state changed:", event, session?.user?.email || "No user");
       if (session) {
+        console.log("[LOGIN DEBUG] Full session details:", {
+          userId: session.user.id,
+          userEmail: session.user.email,
+          accessToken: session.access_token ? "Present" : "Missing",
+          refreshToken: session.refresh_token ? "Present" : "Missing",
+          expiresAt: session.expires_at,
+          tokenType: session.token_type
+        });
+      }
+      // Only redirect on sign in events, not existing sessions
+      if (event === 'SIGNED_IN' && session) {
+        console.log("[LOGIN DEBUG] User signed in, redirecting to dashboard");
         router.push("/pdf-components/dashboard")
       }
     })
@@ -89,7 +121,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     return () => {
       listener.subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, preventAutoRedirect])
 
   return (
     <motion.div

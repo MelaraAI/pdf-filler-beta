@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -47,16 +47,18 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  // Only protect the PDF dashboard route - allow access to all other routes
   if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    request.nextUrl.pathname.startsWith("/pdf-components/dashboard") &&
+    !user
   ) {
-    // no user, potentially respond by redirecting the user to the login page
+    console.log("[MIDDLEWARE DEBUG] Protecting PDF dashboard - redirecting unauthenticated user to home");
+    // no user, redirect to home page for login
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/";
     return NextResponse.redirect(url);
+  } else {
+    console.log("[MIDDLEWARE DEBUG] Allowing access to:", request.nextUrl.pathname, "- User:", !!user);
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
