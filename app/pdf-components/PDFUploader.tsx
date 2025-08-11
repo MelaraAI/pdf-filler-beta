@@ -23,10 +23,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
   const uploadToSupabase = async (file: File) => {
     try {
       // Step 1 - Check if you're actually signed in using the context
-      console.log('=== DEBUGGING AUTHENTICATION STATUS ===');
-      console.log('Context User:', user);
-      console.log('Context Session:', session);
-      console.log('Is Authenticated:', isAuthenticated);
+  // ...removed debug logs...
       
       // Use the context authentication instead of making a separate call
       if (!user || !session) {
@@ -36,28 +33,25 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         alert('You must be logged in to upload files. Please log in and try again.');
         return;
       } else {
-        console.log('✅ Authentication successful from context - user.id:', user.id);
+  // ...removed debug log...
       }
 
       const supabase = createClient();
       
       // Set the session explicitly on the client if it's not picking it up from cookies
       if (session) {
-        console.log('Setting session on Supabase client...');
+  // ...removed debug log...
         await supabase.auth.setSession({
           access_token: session.access_token,
           refresh_token: session.refresh_token
         });
       }
       
-      console.log('Attempting to upload file to Supabase...', file.name);
-      console.log('User authenticated:', user.id);
+  // ...removed debug logs...
       
       // Step 2 - Attempt the upload with detailed logging
       const uploadPath = `${user.id}/${file.name}`;
-      console.log('=== UPLOAD ATTEMPT ===');
-      console.log('Upload path:', uploadPath);
-      console.log('File size:', file.size);
+  // ...removed debug logs...
       console.log('File type:', file.type);
       console.log('File name:', file.name);
       console.log('Bucket: user-documents');
@@ -228,7 +222,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
           variant="outline"
           className="text-sm px-4 py-2 rounded-lg font-medium border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300"
         >
-          Debug Auth Status (Check Console)
+          {/* Debug Auth Status button removed */}
         </Button>
       </motion.div>
       

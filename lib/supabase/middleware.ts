@@ -52,13 +52,13 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/pdf-components/dashboard") &&
     !user
   ) {
-    console.log("[MIDDLEWARE DEBUG] Protecting PDF dashboard - redirecting unauthenticated user to home");
+  // ...removed debug log...
     // no user, redirect to home page for login
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   } else {
-    console.log("[MIDDLEWARE DEBUG] Allowing access to:", request.nextUrl.pathname, "- User:", !!user);
+  // ...removed debug log...
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

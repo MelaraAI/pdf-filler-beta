@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(session?.user ?? null);
       setIsLoading(false);
       
-      console.log('Initial session loaded:', !!session);
+  // ...removed debug log...
     };
 
     getInitialSession();
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, !!session);
+  // ...removed debug log...
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);

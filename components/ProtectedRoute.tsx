@@ -13,25 +13,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
 
   useEffect(() => {
-    console.log("[PROTECTED ROUTE DEBUG] Auth state check:", {
-      isLoading,
-      hasSession: !!session,
-      hasUser: !!user,
-      userEmail: user?.email || "No user"
-    });
-    
+    // ...removed debug log...
     if (!isLoading && !session && !user) {
-      console.log("[PROTECTED ROUTE DEBUG] Not authenticated - redirecting to home");
+  // ...removed debug log...
       // Not authenticated - redirect to home/login
       router.push('/');
     } else if (session && user) {
-      console.log("[PROTECTED ROUTE DEBUG] User authenticated - allowing access to protected route");
+  // ...removed debug log...
     }
   }, [isLoading, session, user, router]);
 
   // Show loading while checking auth
   if (isLoading) {
-    console.log("[PROTECTED ROUTE DEBUG] Still loading auth state...");
+  // ...removed debug log...
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -44,11 +38,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // If not authenticated, don't render the protected content
   if (!session || !user) {
-    console.log("[PROTECTED ROUTE DEBUG] No session or user - blocking access to protected content");
+  // ...removed debug log...
     return null;
   }
 
   // User is authenticated, render the protected content
-  console.log("[PROTECTED ROUTE DEBUG] User authenticated - rendering protected content");
+  // ...removed debug log...
   return <>{children}</>;
 }
