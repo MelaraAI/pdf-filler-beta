@@ -9,106 +9,79 @@ import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/theme-toggle';
 import ThemeCustomizer from '@/app/components/theme-customizer';
 import UserAvatar from '@/app/components/UserAvatar';
-import FileUploadPreview, { FileUploadPreviewRef } from './FileUploadPreview';
 import AutoFillInstructions from './AutoFillInstructions';
-import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDropdown'; 
+import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDropdown';
 
-interface FormField {
-  id: string;
-  name: string;
-  value: string | boolean | string[];
-  type: 'text' | 'checkbox' | 'radio' | 'dropdown';
-  options?: string[];
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import { PDFUploader } from '../PDFUploader';
+import { SimplePDFViewer } from '../SimplePDFViewer';
+
+
 
 const defaultTheme = {
-  name: "Ocean",
-  primary: "#4f46e5",
-  secondary: "#06b6d4",
-  accent: "#0891b2",
-  background: "from-blue-950 to-cyan-950",
+  name: 'Ocean',
+  primary: '#4f46e5',
+  secondary: '#06b6d4',
+  accent: '#0891b2',
+  background: 'from-blue-950 to-cyan-950',
 };
 
 function App() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [instructions, setInstructions] = useState('');
-  const [filledFields, setFilledFields] = useState<FormField[]>([]);
+  // const [filledFields, setFilledFields] = useState<FormField[]>([]);
+  // Update a field value in filledFields
+  // const updateFieldValue = useCallback((id: string, value: string | boolean | string[]) => {
+  //   setFilledFields((prev) => prev.map(f => f.id === id ? { ...f, value } : f));
+  // }, []);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const instructionsRef = useRef('');
   const dropdownRef = useRef<SupabaseFileDropdownRef>(null);
-  const fileUploadRef = useRef<FileUploadPreviewRef>(null);
   const { signOut, user, session, isLoading } = useAuth();
   const router = useRouter();
 
   // Load saved theme
   useEffect(() => {
-    const saved = localStorage.getItem("colorTheme");
+    const saved = localStorage.getItem('colorTheme');
     if (saved) {
       setColorTheme(JSON.parse(saved));
     }
   }, []);
 
-  // Authentication check - redirect if not authenticated
+  // Authentication check
   useEffect(() => {
-    console.log("[DASHBOARD DEBUG] Auth state check:", {
-      isLoading,
-      hasSession: !!session,
-      hasUser: !!user,
-      userEmail: user?.email || "No user"
-    });
-    
     if (!isLoading && !session && !user) {
-      console.log("[DASHBOARD DEBUG] Not authenticated - redirecting to home");
       router.push('/');
-    } else if (session && user) {
-      console.log("[DASHBOARD DEBUG] User authenticated - allowing access to dashboard");
     }
   }, [isLoading, session, user, router]);
 
   const handleThemeChange = (newTheme: typeof defaultTheme) => {
     setColorTheme(newTheme);
-    localStorage.setItem("colorTheme", JSON.stringify(newTheme));
+    localStorage.setItem('colorTheme', JSON.stringify(newTheme));
   };
 
-  // Keep ref in sync with instructions state
   const setInstructionsWithRef = useCallback((newInstructions: string) => {
     setInstructions(newInstructions);
     instructionsRef.current = newInstructions;
   }, []);
 
   const handlePdfLoad = useCallback((file: File) => {
-    // This is called when a file is uploaded through the FileUploadPreview component
     setPdfFile(file);
-    setFilledFields([]);
   }, []);
 
   const handlePdfUpload = useCallback(() => {
-    // Refresh the dropdown to show newly uploaded files
     if (dropdownRef.current) {
       dropdownRef.current.refresh();
     }
   }, []);
 
   const handleFileSelect = useCallback((file: File) => {
-    // This is called when a file is selected from the dropdown
-    // Use the FileUploadPreview ref to load the file with the same flow as upload
-    if (fileUploadRef.current) {
-      fileUploadRef.current.loadFile(file);
-    }
-  }, []);
-
-  const handleFieldsExtracted = useCallback((fields: FormField[]) => {
-    // Handle extracted fields - could be used for auto-fill functionality
-    console.log('Fields extracted:', fields);
+    setPdfFile(file);
   }, []);
 
   const downloadPDF = useCallback(() => {
     const link = document.createElement('a');
-    link.href = 'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCg==';
+    link.href =
+      'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCg==';
     link.download = 'filled-form.pdf';
     link.click();
   }, []);
@@ -116,8 +89,6 @@ function App() {
   const handleLogout = useCallback(async () => {
     try {
       await signOut();
-      
-      // Force redirect to home page
       window.location.href = '/';
     } catch (error) {
       console.error('Unexpected error during logout:', error);
@@ -125,9 +96,7 @@ function App() {
     }
   }, [signOut]);
 
-  // Show loading while checking auth
   if (isLoading) {
-    console.log("[DASHBOARD DEBUG] Still loading auth state...");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -138,163 +107,108 @@ function App() {
     );
   }
 
-  // If not authenticated, don't render the dashboard content
   if (!session || !user) {
-    console.log("[DASHBOARD DEBUG] No session or user - blocking access to dashboard content");
     return null;
   }
 
-  console.log("[DASHBOARD DEBUG] User authenticated - rendering dashboard content");
-
   return (
-    <div 
+    <div
       className="relative min-h-screen w-full"
       style={{
         background: `linear-gradient(135deg, ${colorTheme.primary}08, ${colorTheme.secondary}08, ${colorTheme.accent}08)`,
       }}
     >
-      {/* Background elements for visual consistency */}
-      <div 
-        className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(59,130,246,0.15)_1px,transparent_0)] [background-size:24px_24px]"
+      {/* Background pattern */}
+      <div
+        className="absolute inset-0"
         style={{
           background: `radial-gradient(circle at 1px 1px, ${colorTheme.primary}15 1px, transparent 0)`,
-          backgroundSize: '24px 24px'
+          backgroundSize: '24px 24px',
         }}
       />
-      
+
       {/* Header */}
-      <motion.header 
+      <motion.header
         className="relative z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-white/20 dark:border-slate-700/30 shadow-sm"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <motion.div 
-            className="flex items-center gap-3"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          >
-            <motion.div 
-              className="p-2 bg-white/20 dark:bg-slate-900/30 rounded-lg backdrop-blur-sm border border-white/20"
+          <div className="flex items-center gap-3">
+            <div
+              className="p-2 rounded-lg border"
               style={{
                 background: `linear-gradient(135deg, ${colorTheme.primary}20, ${colorTheme.secondary}20)`,
-                borderColor: `${colorTheme.primary}30`
+                borderColor: `${colorTheme.primary}30`,
               }}
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
             >
-              <FileText 
-                className="w-6 h-6"
-                style={{ color: colorTheme.primary }}
-              />
-            </motion.div>
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">PDF Form Filler</h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Upload, edit, and download your PDF forms</p>
+              <FileText className="w-6 h-6" style={{ color: colorTheme.primary }} />
             </div>
-          </motion.div>
-          
-          <div className="flex items-center gap-3">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            >
-              <ThemeToggle />
-            </motion.div>
-            
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                onClick={downloadPDF}
-                disabled={!pdfFile}
-                className="flex items-center space-x-2 px-6 py-3 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border border-white/10"
-                style={{
-                  background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
-                  boxShadow: `0 10px 30px ${colorTheme.primary}20`,
-                }}
-              >
-                <Download className="w-4 h-4" />
-                <span>Download PDF</span>
-              </Button>
-            </motion.div>
+            <div>
+              <h1 className="text-xl font-semibold">PDF Form Filler</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Upload, preview, and download your PDF forms
+              </p>
+            </div>
+          </div>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button
+              onClick={downloadPDF}
+              disabled={!pdfFile}
+              className="flex items-center space-x-2"
+              style={{
+                background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
+              }}
             >
-              <UserAvatar 
-                colorTheme={colorTheme}
-                onLogout={handleLogout}
-              />
-            </motion.div>
+              <Download className="w-4 h-4" />
+              <span>Download PDF</span>
+            </Button>
+            <UserAvatar colorTheme={colorTheme} onLogout={handleLogout} />
           </div>
         </div>
       </motion.header>
 
-      {/* Main Content */}
-      <motion.div 
-        className="relative z-10 max-w-7xl mx-auto px-6 py-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 min-h-[calc(100vh-200px)]">
-          {/* Left Panel - File Upload & Preview */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            <FileUploadPreview 
-              ref={fileUploadRef}
-              onPdfLoad={handlePdfLoad}
-              onPdfUpload={handlePdfUpload}
-              onFieldsExtracted={handleFieldsExtracted}
-              filledFields={filledFields}
+      {/* Main content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 xl:grid-cols-2 gap-8 min-h-[calc(100vh-200px)]">
+        {/* Left: Upload & Preview */}
+        <div className="space-y-6 h-full flex items-center justify-center">
+          <SimplePDFViewer
+            file={pdfFile}
+            colorTheme={colorTheme}
+            onRemove={() => setPdfFile(null)}
+            onRenderNoPdf={() => (
+              <PDFUploader
+                onUpload={(file: File) => {
+                  handlePdfLoad(file);
+                  handlePdfUpload();
+                }}
+                colorTheme={colorTheme}
+              />
+            )}
+          />
+        </div>
+
+        {/* Right: Controls */}
+        <div className="space-y-6 h-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <AutoFillInstructions
+              instructions={instructions}
+              setInstructions={setInstructionsWithRef}
+              autoFill={pdfFile ? () => {/* TODO: implement AI fill */} : undefined}
+              disabled={!pdfFile}
               colorTheme={colorTheme}
             />
-          </motion.div>
-
-          {/* Right Panel - Form Controls */}
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <motion.div
-              className="h-[calc(50%-12px)]"
-              whileHover={{ scale: 1.01 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            >
-              <AutoFillInstructions
-                instructions={instructions}
-                setInstructions={setInstructionsWithRef}
-                disabled={!pdfFile}
-                colorTheme={colorTheme}
-              />
-            </motion.div>
-            
-            <motion.div
-              className="h-[calc(50%-12px)]"
-              whileHover={{ scale: 1.01 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            >
-              <SupabaseFileDropdown
-                ref={dropdownRef}
-                colorTheme={colorTheme}
-                onFileSelect={handleFileSelect}
-              />
-            </motion.div>
-          </motion.div>
+          </div>
+          <div className="flex-1 min-h-0">
+            <SupabaseFileDropdown ref={dropdownRef} colorTheme={colorTheme} onFileSelect={handleFileSelect} />
+          </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Theme Customizer */}
+      {/* Theme customizer */}
       <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
     </div>
   );
