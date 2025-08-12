@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FileText, 
+  //Download 
+} from 'lucide-react';
+// import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/theme-toggle';
@@ -78,13 +80,13 @@ function App() {
     setPdfFile(file);
   }, []);
 
-  const downloadPDF = useCallback(() => {
-    const link = document.createElement('a');
-    link.href =
-      'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCg==';
-    link.download = 'filled-form.pdf';
-    link.click();
-  }, []);
+  // const downloadPDF = useCallback(() => {
+  //   const link = document.createElement('a');
+  //   link.href =
+  //     'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCg==';
+  //   link.download = 'filled-form.pdf';
+  //   link.click();
+  // }, []);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -155,7 +157,7 @@ function App() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button
+            {/* <Button
               onClick={downloadPDF}
               disabled={!pdfFile}
               className="flex items-center space-x-2"
@@ -165,7 +167,7 @@ function App() {
             >
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
-            </Button>
+            </Button> */}
             <UserAvatar colorTheme={colorTheme} onLogout={handleLogout} />
           </div>
         </div>

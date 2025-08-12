@@ -2,7 +2,7 @@
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { motion } from 'framer-motion';
-import { FileDown, RefreshCw, Download, Upload } from 'lucide-react';
+import { FileDown, RefreshCw, Download, } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -209,7 +209,7 @@ const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDro
         </h3>
         <div className="flex items-center gap-2">
           <label htmlFor="file-upload-dropdown" className="cursor-pointer">
-            <div
+            {/* <div
               className="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: `${colorTheme?.primary || '#3b82f6'}20`,
@@ -219,7 +219,7 @@ const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDro
             >
               <Upload className={`w-4 h-4 mr-1 ${uploading ? 'animate-spin' : ''}`} />
               {uploading ? 'Uploading...' : 'Upload'}
-            </div>
+            </div> */}
           </label>
           <input
             id="file-upload-dropdown"

@@ -29,15 +29,14 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   const handleFillWithAI = async () => {
     setAiLoading(true);
     try {
-      await fetch('https://n8n-9a4w.onrender.com/webhook-test/0ac68543-8ab3-440b-9cae-93e4a93e31df', {
+      await fetch('https://n8n-9a4w.onrender.com/webhook/7305bc7d-f574-48b1-8a32-7bdf4641328c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instructions }),
       });
-      // Optionally, handle response or show a success message
+      // The popup will show when the backend receives the POST from n8n and returns the fileUrl
     } catch (e) {
-      // Optionally, handle error
-      console.error('Error calling Fill with AI webhook:', e);
+      console.error('Error calling Fill with AI:', e);
     } finally {
       setAiLoading(false);
     }
