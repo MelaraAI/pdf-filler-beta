@@ -40,6 +40,12 @@ const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDro
     refresh: fetchFiles,
   }));
 
+  // Always fetch files on mount and when session changes
+  useEffect(() => {
+    fetchFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
   const fetchFiles = async () => {
     const supabase = createClient();
     setLoading(true);
@@ -72,6 +78,12 @@ const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDro
       })) || [];
 
       setFiles(filesWithMetadata);
+      // Auto-select the first file if available
+      if (filesWithMetadata.length > 0) {
+        setSelectedFileId(filesWithMetadata[0].id);
+      } else {
+        setSelectedFileId('');
+      }
     } catch (error) {
       console.error('Error fetching files:', error);
     } finally {
@@ -165,47 +177,7 @@ const SupabaseFileDropdown = forwardRef<SupabaseFileDropdownRef, SupabaseFileDro
     }
   };
 
-  useEffect(() => {
-    const loadFiles = async () => {
-      // Don't set loading during initial load
-      try {
-        if (!session) {
-          console.log('No active session found, clearing files');
-          setFiles([]);
-          return;
-        }
 
-        const supabase = createClient();
-
-        const { data, error } = await supabase.storage
-          .from('user-documents')
-          .list(session.user.id, {
-            limit: 100,
-            offset: 0,
-            sortBy: { column: 'created_at', order: 'desc' }
-          });
-
-        if (error) {
-          console.error('Error fetching files:', error);
-          return;
-        }
-
-        const filesWithMetadata = data?.map(file => ({
-          id: file.name,
-          name: file.name,
-          created_at: file.created_at || '',
-          updated_at: file.updated_at || '',
-          size: file.metadata?.size || 0
-        })) || [];
-
-        setFiles(filesWithMetadata);
-      } catch (error) {
-        console.error('Error fetching files:', error);
-      }
-    };
-
-    loadFiles();
-  }, [session]); // Re-run when session changes
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';

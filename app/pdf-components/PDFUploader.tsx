@@ -80,68 +80,68 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
     }
   };
 
-  // Debug function to check authentication status manually
-  const debugAuthStatus = async () => {
-    const supabase = createClient();
-    console.log('=== MANUAL AUTH DEBUG ===');
+  // // Debug function to check authentication status manually
+  // const debugAuthStatus = async () => {
+  //   const supabase = createClient();
+  //   console.log('=== MANUAL AUTH DEBUG ===');
     
-    console.log('--- Context Authentication ---');
-    console.log('Context User:', user);
-    console.log('Context Session:', session);
-    console.log('Is Authenticated:', isAuthenticated);
+  //   console.log('--- Context Authentication ---');
+  //   console.log('Context User:', user);
+  //   console.log('Context Session:', session);
+  //   console.log('Is Authenticated:', isAuthenticated);
     
-    console.log('--- Supabase Client Authentication (Before Session Set) ---');
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    console.log('Supabase Auth Data:', authData);
-    console.log('Supabase Auth Error:', authError);
+  //   console.log('--- Supabase Client Authentication (Before Session Set) ---');
+  //   const { data: authData, error: authError } = await supabase.auth.getUser();
+  //   console.log('Supabase Auth Data:', authData);
+  //   console.log('Supabase Auth Error:', authError);
     
-    // Try setting the session manually if we have one
-    if (session && !authData?.user) {
-      console.log('--- Attempting to Set Session Manually ---');
-      try {
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token
-        });
-        console.log('✅ Session set successfully');
+  //   // Try setting the session manually if we have one
+  //   if (session && !authData?.user) {
+  //     console.log('--- Attempting to Set Session Manually ---');
+  //     try {
+  //       await supabase.auth.setSession({
+  //         access_token: session.access_token,
+  //         refresh_token: session.refresh_token
+  //       });
+  //       console.log('✅ Session set successfully');
         
-        // Check again after setting session
-        const { data: newAuthData, error: newAuthError } = await supabase.auth.getUser();
-        console.log('--- After Setting Session ---');
-        console.log('New Auth Data:', newAuthData);
-        console.log('New Auth Error:', newAuthError);
+  //       // Check again after setting session
+  //       const { data: newAuthData, error: newAuthError } = await supabase.auth.getUser();
+  //       console.log('--- After Setting Session ---');
+  //       console.log('New Auth Data:', newAuthData);
+  //       console.log('New Auth Error:', newAuthError);
         
-        if (newAuthData?.user) {
-          console.log('✅ Supabase client now shows user authenticated with ID:', newAuthData.user.id);
-        } else {
-          console.log('❌ Still no authenticated user after setting session');
-        }
-      } catch (error) {
-        console.error('❌ Error setting session:', error);
-      }
-    }
+  //       if (newAuthData?.user) {
+  //         console.log('✅ Supabase client now shows user authenticated with ID:', newAuthData.user.id);
+  //       } else {
+  //         console.log('❌ Still no authenticated user after setting session');
+  //       }
+  //     } catch (error) {
+  //       console.error('❌ Error setting session:', error);
+  //     }
+  //   }
     
-    console.log('--- Comparison ---');
-    if (user && session) {
-      console.log('✅ Context shows user authenticated with ID:', user.id);
-    } else {
-      console.log('❌ Context shows no authenticated user');
-    }
+  //   console.log('--- Comparison ---');
+  //   if (user && session) {
+  //     console.log('✅ Context shows user authenticated with ID:', user.id);
+  //   } else {
+  //     console.log('❌ Context shows no authenticated user');
+  //   }
     
-    if (authData?.user) {
-      console.log('✅ Supabase client shows user authenticated with ID:', authData.user.id);
-    } else {
-      console.log('❌ Supabase client shows no authenticated user');
-    }
+  //   if (authData?.user) {
+  //     console.log('✅ Supabase client shows user authenticated with ID:', authData.user.id);
+  //   } else {
+  //     console.log('❌ Supabase client shows no authenticated user');
+  //   }
     
-    // Check if they match
-    if (user?.id === authData?.user?.id) {
-      console.log('✅ Context and Supabase client match!');
-    } else {
-      console.log('⚠️  Context and Supabase client DO NOT match!');
-      console.log('This suggests a session/cookie issue');
-    }
-  };
+  //   // Check if they match
+  //   if (user?.id === authData?.user?.id) {
+  //     console.log('✅ Context and Supabase client match!');
+  //   } else {
+  //     console.log('⚠️  Context and Supabase client DO NOT match!');
+  //     console.log('This suggests a session/cookie issue');
+  //   }
+  // };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -210,21 +210,6 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         </Button>
       </motion.div>
       
-      {/* Debug Button - Remove this after debugging */}
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
-        className="mt-4"
-      >
-        <Button 
-          onClick={debugAuthStatus}
-          variant="outline"
-          className="text-sm px-4 py-2 rounded-lg font-medium border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300"
-        >
-          {/* Debug Auth Status button removed */}
-        </Button>
-      </motion.div>
       
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
         {!isAuthenticated 
