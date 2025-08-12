@@ -13,7 +13,7 @@ import ThemeToggle from "@/app/components/theme-toggle";
 import ThemeCustomizer from "@/app/components/theme-customizer";
 import FloatingElements from "@/app/components/floating-elements";
 import ParticleField from "@/app/components/particle-field";
-import AnimatedText from "@/app/components/animated-text";
+// import AnimatedText from "@/app/components/animated-text";
 import TypewriterText from "@/app/components/typewriter";
 import ZyfloCursor from "@/app/components/zyflo/mouse-style";
 
