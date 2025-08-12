@@ -14,6 +14,7 @@ import ThemeCustomizer from "@/app/components/theme-customizer";
 import FloatingElements from "@/app/components/floating-elements";
 import ParticleField from "@/app/components/particle-field";
 import AnimatedText from "@/app/components/animated-text";
+import TypewriterText from "@/app/components/typewriter";
 import ZyfloCursor from "@/app/components/zyflo/mouse-style";
 
 const defaultTheme = {
@@ -156,10 +157,11 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, type: "spring", damping: 20 }}
               >
-                <AnimatedText
+                <TypewriterText
                   text="The Next Generation"
                   className="mb-2 text-4xl font-bold leading-tight tracking-tighter md:text-6xl"
-                  delay={0.5}
+                  speed={80}
+                  delay={300}
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
