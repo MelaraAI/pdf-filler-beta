@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { Wand2 } from 'lucide-react';
 
 interface Props {
@@ -20,10 +20,29 @@ interface Props {
 const AutoFillInstructions = memo(function AutoFillInstructions({
   instructions,
   setInstructions,
-  autoFill,
   disabled,
   colorTheme,
 }: Props) {
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Handler for Fill with AI button
+  const handleFillWithAI = async () => {
+    setAiLoading(true);
+    try {
+      await fetch('https://n8n-9a4w.onrender.com/webhook-test/0ac68543-8ab3-440b-9cae-93e4a93e31df', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructions }),
+      });
+      // Optionally, handle response or show a success message
+    } catch (e) {
+      // Optionally, handle error
+      console.error('Error calling Fill with AI webhook:', e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleInstructionsChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInstructions(e.target.value);
@@ -41,9 +60,9 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
     const widget = document.createElement('elevenlabs-convai');
     widget.setAttribute('agent-id', 'agent_2601k19e0awtegzbav9nh55vph4w');
     widget.setAttribute('show-branding', 'false');
-    widget.style.width = '100%';
-    widget.style.height = '70px';
-    widget.style.minHeight = '70px';
+    widget.style.width = '135%';
+    widget.style.height = '120px';
+    widget.style.margin = 'auto';
 
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
@@ -93,28 +112,26 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
         </p>
 
         {/* Flex row for button and voice widget */}
-        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex w-full sm:w-auto items-center gap-3">
-            {autoFill && (
-              <button
-                onClick={autoFill}
-                disabled={disabled}
-                className="flex items-center gap-2 w-full sm:w-auto text-white px-5 py-3 rounded-lg font-medium shadow-lg hover:shadow-2xl hover:shadow-cyan-500/30 transition-shadow duration-500 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border border-white/10"
-                style={{
-                  background: colorTheme 
-                    ? `linear-gradient(135deg, ${colorTheme.accent}, ${colorTheme.secondary})`
-                    : 'linear-gradient(135deg, #0d9488, #06b6d4)',
-                  boxShadow: colorTheme ? `0 10px 30px ${colorTheme.accent}20` : '0 10px 30px rgba(13, 148, 136, 0.2)'
-                }}
-              >
-                <Wand2 className="w-5 h-5" />
-                Fill with AI
-              </button>
-            )}
+        <div className="mt-6 flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={handleFillWithAI}
+              disabled={disabled || aiLoading}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg font-medium shadow-lg hover:shadow-2xl hover:shadow-cyan-500/30 transition-shadow duration-500 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border border-white/10 text-white"
+              style={{
+                background: colorTheme 
+                  ? `linear-gradient(135deg, ${colorTheme.accent}, ${colorTheme.secondary})`
+                  : 'linear-gradient(135deg, #0d9488, #06b6d4)',
+                boxShadow: colorTheme ? `0 10px 30px ${colorTheme.accent}20` : '0 10px 30px rgba(13, 148, 136, 0.2)'
+              }}
+            >
+              <Wand2 className={`w-5 h-5${aiLoading ? ' animate-spin' : ''}`} />
+              {aiLoading ? 'Filling...' : 'Fill with AI'}
+            </button>
             {/* Voice widget container */}
             <div
               id="voice-widget-inline"
-              className="h-[70px] min-h-[70px] w-full sm:w-[320px] flex items-center justify-center bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm rounded-lg border border-white/20 dark:border-slate-700/30"
+              className="h-[50px] min-h-[20px] w-[100px] flex items-center justify-center bg-white/30 dark:bg-slate-800/30 backdrop-blur-md rounded-lg"
             />
           </div>
         </div>
