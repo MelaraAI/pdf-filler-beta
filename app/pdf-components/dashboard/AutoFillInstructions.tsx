@@ -31,7 +31,7 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   const handleFillWithAI = async () => {
   setAiLoading(true);
   try {
-    await fetch('https://n8n-your-server/webhook/my-flow', {
+    await fetch('https://n8n-9a4w.onrender.com/webhook/7305bc7d-f574-48b1-8a32-7bdf4641328c', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
