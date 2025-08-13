@@ -202,6 +202,7 @@ function App() {
               autoFill={pdfFile ? () => {/* TODO: implement AI fill */} : undefined}
               disabled={!pdfFile}
               colorTheme={colorTheme}
+              userId={user?.id} // ⬅️ add this
             />
           </div>
           <div className="flex-1 min-h-0">

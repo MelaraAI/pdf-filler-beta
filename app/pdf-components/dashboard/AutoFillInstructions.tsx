@@ -15,6 +15,7 @@ interface Props {
     accent: string;
     background: string;
   };
+  userId?: string;
 }
 
 const AutoFillInstructions = memo(function AutoFillInstructions({
@@ -22,25 +23,29 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   setInstructions,
   disabled,
   colorTheme,
+  userId,
 }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
 
   // Handler for Fill with AI button
   const handleFillWithAI = async () => {
-    setAiLoading(true);
-    try {
-      await fetch('https://n8n-9a4w.onrender.com/webhook/7305bc7d-f574-48b1-8a32-7bdf4641328c', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instructions }),
-      });
-      // The popup will show when the backend receives the POST from n8n and returns the fileUrl
-    } catch (e) {
-      console.error('Error calling Fill with AI:', e);
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  setAiLoading(true);
+  try {
+    await fetch('https://n8n-your-server/webhook/my-flow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instructions,
+        userId, // send user ID to n8n
+      }),
+    });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setAiLoading(false);
+  }
+};
+
 
   const handleInstructionsChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
