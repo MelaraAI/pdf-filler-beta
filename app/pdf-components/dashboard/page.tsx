@@ -29,6 +29,7 @@ const defaultTheme = {
 
 function App() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [instructions, setInstructions] = useState('');
   // const [filledFields, setFilledFields] = useState<FormField[]>([]);
   // Update a field value in filledFields
@@ -66,8 +67,9 @@ function App() {
     instructionsRef.current = newInstructions;
   }, []);
 
-  const handlePdfLoad = useCallback((file: File) => {
+  const handlePdfLoad = useCallback((file: File, signedUrl?: string) => {
     setPdfFile(file);
+    setSignedUrl(signedUrl || null);
   }, []);
 
   const handlePdfUpload = useCallback(() => {
@@ -183,8 +185,8 @@ function App() {
             onRemove={() => setPdfFile(null)}
             onRenderNoPdf={() => (
               <PDFUploader
-                onUpload={(file: File) => {
-                  handlePdfLoad(file);
+                onUpload={(file: File, signedUrl?: string) => {
+                  handlePdfLoad(file, signedUrl);
                   handlePdfUpload();
                 }}
                 colorTheme={colorTheme}
@@ -202,7 +204,9 @@ function App() {
               autoFill={pdfFile ? () => {/* TODO: implement AI fill */} : undefined}
               disabled={!pdfFile}
               colorTheme={colorTheme}
-              userId={user?.id} // ⬅️ add this
+              userId={user?.id}
+              signedUrl={signedUrl}
+              fileName={pdfFile?.name || null}
             />
           </div>
           <div className="flex-1 min-h-0">

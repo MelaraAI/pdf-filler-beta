@@ -16,6 +16,8 @@ interface Props {
     background: string;
   };
   userId?: string;
+  signedUrl?: string | null;
+  fileName?: string | null;
 }
 
 const AutoFillInstructions = memo(function AutoFillInstructions({
@@ -24,6 +26,8 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   disabled,
   colorTheme,
   userId,
+  signedUrl,
+  fileName,
 }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -36,7 +40,9 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         instructions,
+        fileName,
         userId, // send user ID to n8n
+        signedUrl, // send signed URL to n8n 
       }),
     });
   } catch (err) {
@@ -45,8 +51,6 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
     setAiLoading(false);
   }
 };
-
-
   const handleInstructionsChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInstructions(e.target.value);

@@ -37,7 +37,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
 
       // Generate unique ID and path
       const file_id = crypto.randomUUID();
-      const uploadPath = `${user.id}/${file_id}-${file.name}`;
+      const uploadPath = `${user.id}/${file.name}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -56,6 +56,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
       const { error: dbError } = await supabase
         .from('unmodified-documents')
         .insert({
+          file_id: file_id,
           filename: file.name,
           storage_path: uploadPath,
           mime_type: file.type,
