@@ -49,13 +49,17 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
       
   // ...removed debug logs...
       
-      // Step 2 - Attempt the upload with detailed logging
-      const uploadPath = `${user.id}/${file.name}`;
+      // Step 2 - Generate unique file ID and path
+      const file_id = crypto.randomUUID();
+      const uploadPath = `${user.id}/${file_id}-${file.name}`;
   // ...removed debug logs...
       console.log('File type:', file.type);
       console.log('File name:', file.name);
+      console.log('File ID:', file_id);
+      console.log('Upload path:', uploadPath);
       console.log('Bucket: user-documents');
       
+      // Step 3 - Upload file to storage bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('user-documents')
         .upload(uploadPath, file);
@@ -69,10 +73,34 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         console.error('Error message:', uploadError.message);
         console.error('Full error object:', JSON.stringify(uploadError, null, 2));
         alert(`Upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      console.log('✅ File uploaded to user-documents successfully!');
+      console.log('Upload data:', uploadData);
+
+      // Step 4 - Insert file metadata into database
+      const { error: dbError } = await supabase
+        .from('unmodified-files')
+        .insert({
+          file_id,
+          path: uploadPath,
+          bucket: 'user-documents',
+          file_name: file.name,
+          user_id: user.id
+        });
+
+      console.log('=== DATABASE INSERT RESULT ===');
+      console.log('Database error:', dbError);
+
+      if (dbError) {
+        console.error('❌ Database insert failed:', dbError);
+        console.error('Error message:', dbError.message);
+        console.error('Full error object:', JSON.stringify(dbError, null, 2));
+        alert(`File uploaded but failed to save metadata: ${dbError.message}`);
       } else {
-        console.log('✅ File uploaded to user-documents successfully!');
-        console.log('Upload data:', uploadData);
-        alert('File uploaded successfully!');
+        console.log('✅ File metadata saved to database successfully!');
+        alert('File uploaded and saved successfully!');
       }
     } catch (error) {
       console.error('Error uploading to Supabase:', error);
