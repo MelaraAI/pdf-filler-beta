@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 interface PDFUploaderProps {
-  onUpload: (file: File) => void;
+  onUpload: (file: File, signedUrl?: string) => void; // now returns signedUrl too
   colorTheme?: {
     primary: string;
     secondary: string;
@@ -22,168 +22,87 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
 
   const uploadToSupabase = async (file: File) => {
     try {
-      // Step 1 - Check if you're actually signed in using the context
-  // ...removed debug logs...
-      
-      // Use the context authentication instead of making a separate call
       if (!user || !session) {
-        console.error('❌ You are not authenticated - RLS will always fail');
-        console.error('User from context:', user);
-        console.error('Session from context:', session);
         alert('You must be logged in to upload files. Please log in and try again.');
-        return;
-      } else {
-  // ...removed debug log...
+        return null;
       }
 
       const supabase = createClient();
-      
-      // Set the session explicitly on the client if it's not picking it up from cookies
-      if (session) {
-  // ...removed debug log...
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token
-        });
-      }
-      
-  // ...removed debug logs...
-      
-      // Step 2 - Generate unique file ID and path
+
+      // Ensure session is set on client
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+
+      // Generate unique ID and path
       const file_id = crypto.randomUUID();
       const uploadPath = `${user.id}/${file_id}-${file.name}`;
-  // ...removed debug logs...
-      console.log('File type:', file.type);
-      console.log('File name:', file.name);
-      console.log('File ID:', file_id);
-      console.log('Upload path:', uploadPath);
-      console.log('Bucket: user-documents');
-      
-      // Step 3 - Upload file to storage bucket
-      const { data: uploadData, error: uploadError } = await supabase.storage
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
         .from('user-documents')
         .upload(uploadPath, file);
 
-      console.log('=== UPLOAD RESULT ===');
-      console.log('Upload data:', uploadData);
-      console.log('Upload error:', uploadError);
-
       if (uploadError) {
-        console.error('❌ Upload failed:', uploadError);
-        console.error('Error message:', uploadError.message);
-        console.error('Full error object:', JSON.stringify(uploadError, null, 2));
+        console.error('❌ Upload failed:', uploadError.message);
         alert(`Upload failed: ${uploadError.message}`);
-        return;
+        return null;
       }
 
       console.log('✅ File uploaded to user-documents successfully!');
-      console.log('Upload data:', uploadData);
 
-      // Step 4 - Insert file metadata into database
+      // Insert metadata (no signed URL stored in DB)
       const { error: dbError } = await supabase
-        .from('unmodified-files')
+        .from('unmodified-documents')
         .insert({
-          file_id,
-          path: uploadPath,
-          bucket: 'user-documents',
-          file_name: file.name,
-          user_id: user.id
+          filename: file.name,
+          storage_path: uploadPath,
+          mime_type: file.type,
+          user_id: user.id,
         });
 
-      console.log('=== DATABASE INSERT RESULT ===');
-      console.log('Database error:', dbError);
-
       if (dbError) {
-        console.error('❌ Database insert failed:', dbError);
-        console.error('Error message:', dbError.message);
-        console.error('Full error object:', JSON.stringify(dbError, null, 2));
+        console.error('❌ Database insert failed:', dbError.message);
         alert(`File uploaded but failed to save metadata: ${dbError.message}`);
-      } else {
-        console.log('✅ File metadata saved to database successfully!');
-        alert('File uploaded and saved successfully!');
+        return null;
       }
+
+      console.log('✅ File metadata saved to database successfully!');
+
+      // Generate a signed URL for immediate use (1 hour)
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('user-documents')
+        .createSignedUrl(uploadPath, 60 * 60);
+
+      if (signedError) {
+        console.error('❌ Signed URL generation failed:', signedError.message);
+        alert(`Signed URL creation failed: ${signedError.message}`);
+        return null;
+      }
+
+      const signedUrl = signedData?.signedUrl;
+      console.log('Signed URL (send to n8n):', signedUrl);
+
+      // Return the signed URL so it can be passed to n8n
+      return signedUrl;
     } catch (error) {
       console.error('Error uploading to Supabase:', error);
       alert('An unexpected error occurred during upload.');
+      return null;
     }
   };
-
-  // // Debug function to check authentication status manually
-  // const debugAuthStatus = async () => {
-  //   const supabase = createClient();
-  //   console.log('=== MANUAL AUTH DEBUG ===');
-    
-  //   console.log('--- Context Authentication ---');
-  //   console.log('Context User:', user);
-  //   console.log('Context Session:', session);
-  //   console.log('Is Authenticated:', isAuthenticated);
-    
-  //   console.log('--- Supabase Client Authentication (Before Session Set) ---');
-  //   const { data: authData, error: authError } = await supabase.auth.getUser();
-  //   console.log('Supabase Auth Data:', authData);
-  //   console.log('Supabase Auth Error:', authError);
-    
-  //   // Try setting the session manually if we have one
-  //   if (session && !authData?.user) {
-  //     console.log('--- Attempting to Set Session Manually ---');
-  //     try {
-  //       await supabase.auth.setSession({
-  //         access_token: session.access_token,
-  //         refresh_token: session.refresh_token
-  //       });
-  //       console.log('✅ Session set successfully');
-        
-  //       // Check again after setting session
-  //       const { data: newAuthData, error: newAuthError } = await supabase.auth.getUser();
-  //       console.log('--- After Setting Session ---');
-  //       console.log('New Auth Data:', newAuthData);
-  //       console.log('New Auth Error:', newAuthError);
-        
-  //       if (newAuthData?.user) {
-  //         console.log('✅ Supabase client now shows user authenticated with ID:', newAuthData.user.id);
-  //       } else {
-  //         console.log('❌ Still no authenticated user after setting session');
-  //       }
-  //     } catch (error) {
-  //       console.error('❌ Error setting session:', error);
-  //     }
-  //   }
-    
-  //   console.log('--- Comparison ---');
-  //   if (user && session) {
-  //     console.log('✅ Context shows user authenticated with ID:', user.id);
-  //   } else {
-  //     console.log('❌ Context shows no authenticated user');
-  //   }
-    
-  //   if (authData?.user) {
-  //     console.log('✅ Supabase client shows user authenticated with ID:', authData.user.id);
-  //   } else {
-  //     console.log('❌ Supabase client shows no authenticated user');
-  //   }
-    
-  //   // Check if they match
-  //   if (user?.id === authData?.user?.id) {
-  //     console.log('✅ Context and Supabase client match!');
-  //   } else {
-  //     console.log('⚠️  Context and Supabase client DO NOT match!');
-  //     console.log('This suggests a session/cookie issue');
-  //   }
-  // };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
         setUploading(true);
-        
         try {
-          // Upload to Supabase in the background
-          await uploadToSupabase(file);
-          
-          // Still call the original onUpload for immediate preview
-          onUpload(file);
+          const signedUrl = await uploadToSupabase(file);
+
+          // Pass both the File and the signed URL to the parent
+          onUpload(file, signedUrl || undefined);
         } catch (error) {
           console.error('Error in file upload process:', error);
         } finally {
@@ -237,7 +156,6 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
           </div>
         </Button>
       </motion.div>
-      
       
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
         {!isAuthenticated 
