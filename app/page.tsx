@@ -51,6 +51,14 @@ export default function Home() {
     }
   }, []);
 
+  // Add/remove hide-scrollbar class to body
+  useEffect(() => {
+    document.body.classList.add('hide-scrollbar');
+    return () => {
+      document.body.classList.remove('hide-scrollbar');
+    };
+  }, []);
+
   const handleThemeChange = (newTheme: typeof defaultTheme) => {
     setColorTheme(newTheme);
     localStorage.setItem("colorTheme", JSON.stringify(newTheme));
