@@ -104,30 +104,39 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
         };
         
         recognition.onend = () => {
-          console.log('Speech recognition ended. Manual stop:', manualStopRef.current);
+          console.log('🏁 Speech recognition ended. Manual stop flag:', manualStopRef.current);
           
-          // Only stop if it was manually stopped
+          // Check if this was a manual stop
           if (manualStopRef.current) {
-            console.log('Manual stop - ending recognition');
+            console.log('✋ Manual stop detected - ending recognition permanently');
             setRecording(false);
             setTranscribing(false);
-            manualStopRef.current = false;
+            
             // Clean up transcript refs
             interimTranscriptRef.current = '';
             finalTranscriptRef.current = '';
+            
+            // Reset the manual stop flag for next session
+            setTimeout(() => {
+              manualStopRef.current = false;
+              console.log('🔄 Manual stop flag reset for next session');
+            }, 500);
           } else {
-            // Automatically restart recognition if it wasn't manually stopped
-            console.log('Auto-restarting recognition');
+            // Only auto-restart if not manually stopped
+            console.log('🔄 Auto-restarting recognition (not manually stopped)');
             setTimeout(() => {
               try {
-                if (!manualStopRef.current) {
-                  recognition.start();
+                // Double-check that we still shouldn't stop
+                if (!manualStopRef.current && recognitionRef.current) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (recognitionRef.current as any).start();
+                  console.log('✅ Recognition restarted successfully');
                 }
               } catch (error) {
-                console.error('Failed to restart speech recognition:', error);
+                console.error('❌ Failed to restart speech recognition:', error);
                 setRecording(false);
                 setTranscribing(false);
-                // Clean up transcript refs
+                // Clean up transcript refs on restart failure
                 interimTranscriptRef.current = '';
                 finalTranscriptRef.current = '';
               }
@@ -140,6 +149,22 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
     }
   }, [setInstructions]); // Only depend on setInstructions callback
 
+  // Cleanup effect to stop recording when component unmounts
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current && recording) {
+        console.log('🧹 Component unmounting - stopping speech recognition');
+        manualStopRef.current = true;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (recognitionRef.current as any).stop();
+        } catch (error) {
+          console.error('Error stopping recognition on unmount:', error);
+        }
+      }
+    };
+  }, [recording]);
+
   // Voice recording functions
   const startRecording = async () => {
     if (!recognitionRef.current) {
@@ -148,25 +173,56 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
     }
     
     try {
+      console.log('🎤 Starting speech recognition...');
+      
       // Reset transcript refs and manual stop flag
       interimTranscriptRef.current = '';
       finalTranscriptRef.current = '';
       manualStopRef.current = false;
       
+      // Update UI state immediately
+      setRecording(true);
+      setTranscribing(false);
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (recognitionRef.current as any).start();
+      console.log('✅ Speech recognition start() called successfully');
     } catch (error) {
-      console.error('Failed to start speech recognition:', error);
+      console.error('❌ Failed to start speech recognition:', error);
+      // Reset UI state on error
+      setRecording(false);
+      setTranscribing(false);
       alert('Failed to start speech recognition. Please try again.');
     }
   };
 
   const stopRecording = () => {
     if (recognitionRef.current) {
-      // Set manual stop flag before stopping
+      console.log('🛑 Stop button clicked - manual stop initiated');
+      
+      // Set manual stop flag FIRST and ensure it's set
       manualStopRef.current = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (recognitionRef.current as any).stop();
+      
+      // Force UI update immediately
+      setRecording(false);
+      setTranscribing(false);
+      
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (recognitionRef.current as any).stop();
+        console.log('✅ Speech recognition stop() called successfully');
+      } catch (error) {
+        console.error('❌ Error stopping speech recognition:', error);
+      }
+      
+      // Additional safety: clear refs after a short delay to ensure cleanup
+      setTimeout(() => {
+        interimTranscriptRef.current = '';
+        finalTranscriptRef.current = '';
+        console.log('🧹 Transcript refs cleared');
+      }, 100);
+    } else {
+      console.warn('⚠️ No recognition instance to stop');
     }
   };
 
