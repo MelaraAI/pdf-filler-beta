@@ -49,13 +49,6 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
     setIsLoading(true)
     setErrorMessage("")
 
-    const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
-    if (!allowedEmails.includes(email.trim().toLowerCase())) {
-      setErrorMessage("Access denied. Please enter the correct email to continue.");
-      setIsLoading(false);
-      return;
-    }
-
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match. Please check and try again.");
       setIsLoading(false);

@@ -46,13 +46,6 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     setIsLoading(true)
     setErrorMessage("")
 
-    const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
-    if (!allowedEmails.includes(email.trim().toLowerCase())) {
-      setErrorMessage("Access denied. Please enter the correct email to continue.");
-      setIsLoading(false);
-      return;
-    }
-
     console.log("[LOGIN DEBUG] Attempting login for email:", email);
     
     const { data, error } = await supabase.auth.signInWithPassword({

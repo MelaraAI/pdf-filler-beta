@@ -36,13 +36,6 @@ export async function GET(req: NextRequest) {
     const user = data.user;
     console.log("👤 Authenticated user:", user.email);
 
-const allowedEmails = ["viincentmelara@gmail.com", "rhayek@hayekinsurance.com", "team@melara.tech"];
-if (!user.email || !allowedEmails.includes(user.email)) {
-  console.warn("⛔ Unauthorized user:", user.email);
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-}
-
-
     console.log("🤖 Requesting signed URL from ElevenLabs SDK...");
     const response = await elevenlabs.conversationalAi.conversations.getSignedUrl({
       agentId: process.env.ELEVENLABS_AGENT_ID!,
