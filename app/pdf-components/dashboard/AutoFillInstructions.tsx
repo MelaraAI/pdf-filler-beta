@@ -1,11 +1,11 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
-import { Wand2 } from 'lucide-react';
+import { memo, useCallback, useEffect, useState, useRef } from 'react';
+import { Wand2, Mic, Square } from 'lucide-react';
 
 interface Props {
   instructions: string;
-  setInstructions: (s: string) => void;
+  setInstructions: (s: string | ((prev: string) => string)) => void;
   autoFill?: () => void;
   disabled: boolean;
   colorTheme?: {
@@ -30,6 +30,145 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   fileName,
 }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
+  
+  // Voice recording state
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const recognitionRef = useRef<unknown | null>(null);
+  const interimTranscriptRef = useRef<string>('');
+  const finalTranscriptRef = useRef<string>('');
+  const manualStopRef = useRef<boolean>(false);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+          setRecording(true);
+          setTranscribing(false);
+        };
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          // Update the instructions field in real-time using callback to get current state
+          setInstructions((currentInstructions: string) => {
+            const baseInstructions = currentInstructions
+              .replace(interimTranscriptRef.current, '')
+              .replace(finalTranscriptRef.current, '');
+            
+            if (finalTranscript) {
+              finalTranscriptRef.current += finalTranscript;
+              return baseInstructions + finalTranscriptRef.current + interimTranscript;
+            } else if (interimTranscript) {
+              interimTranscriptRef.current = interimTranscript;
+              return baseInstructions + finalTranscriptRef.current + interimTranscript;
+            }
+            
+            return currentInstructions;
+          });
+        };
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          // Don't stop on no-speech or audio-capture errors, just continue
+          if (event.error === 'no-speech' || event.error === 'audio-capture') {
+            console.log('Ignoring no-speech/audio-capture error');
+            return;
+          }
+          
+          setRecording(false);
+          setTranscribing(false);
+          manualStopRef.current = true; // Prevent auto-restart after error
+          alert(`Speech recognition error: ${event.error}`);
+        };
+        
+        recognition.onend = () => {
+          console.log('Speech recognition ended. Manual stop:', manualStopRef.current);
+          
+          // Only stop if it was manually stopped
+          if (manualStopRef.current) {
+            console.log('Manual stop - ending recognition');
+            setRecording(false);
+            setTranscribing(false);
+            manualStopRef.current = false;
+            // Clean up transcript refs
+            interimTranscriptRef.current = '';
+            finalTranscriptRef.current = '';
+          } else {
+            // Automatically restart recognition if it wasn't manually stopped
+            console.log('Auto-restarting recognition');
+            setTimeout(() => {
+              try {
+                if (!manualStopRef.current) {
+                  recognition.start();
+                }
+              } catch (error) {
+                console.error('Failed to restart speech recognition:', error);
+                setRecording(false);
+                setTranscribing(false);
+                // Clean up transcript refs
+                interimTranscriptRef.current = '';
+                finalTranscriptRef.current = '';
+              }
+            }, 100); // Small delay to avoid conflicts
+          }
+        };
+        
+        recognitionRef.current = recognition;
+      }
+    }
+  }, [setInstructions]); // Only depend on setInstructions callback
+
+  // Voice recording functions
+  const startRecording = async () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser.');
+      return;
+    }
+    
+    try {
+      // Reset transcript refs and manual stop flag
+      interimTranscriptRef.current = '';
+      finalTranscriptRef.current = '';
+      manualStopRef.current = false;
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (recognitionRef.current as any).start();
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+      alert('Failed to start speech recognition. Please try again.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      // Set manual stop flag before stopping
+      manualStopRef.current = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (recognitionRef.current as any).stop();
+    }
+  };
 
   // Handler for Fill with AI button
   const handleFillWithAI = async () => {
@@ -79,6 +218,7 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   );
 
   // Inject the ElevenLabs widget dynamically
+  /* 
   useEffect(() => {
     const container = document.getElementById('voice-widget-inline');
     if (!container) return;
@@ -104,6 +244,7 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
       container.innerHTML = '';
     };
   }, []);
+  */
 
   return (
     <div
@@ -157,10 +298,51 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
               {aiLoading ? 'Filling...' : 'Fill with AI'}
             </button>
             {/* Voice widget container */}
+            {/* 
             <div
               id="voice-widget-inline"
               className="h-[50px] min-h-[20px] w-[100px] flex items-center justify-center bg-white/30 dark:bg-slate-800/30 backdrop-blur-md rounded-lg"
             />
+            */}
+            
+            {/* Microphone button */}
+            <button
+              onClick={recording ? stopRecording : startRecording}
+              disabled={transcribing}
+              className={`flex items-center justify-center w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border border-white/20 dark:border-slate-600/20 hover:scale-105 ${
+                recording ? 'animate-pulse' : ''
+              } ${transcribing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{
+                background: recording
+                  ? colorTheme 
+                    ? `linear-gradient(135deg, #ef4444, #dc2626)`
+                    : 'linear-gradient(135deg, #ef4444, #dc2626)'
+                  : colorTheme 
+                    ? `linear-gradient(135deg, ${colorTheme.primary}20, ${colorTheme.secondary}20)`
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2))'
+              }}
+              title={
+                transcribing 
+                  ? "Transcribing..." 
+                  : recording 
+                    ? "Stop Recording" 
+                    : "Start Voice Input"
+              }
+            >
+              {transcribing ? (
+                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : recording ? (
+                <Square 
+                  className="w-4 h-4" 
+                  style={{ color: '#ffffff' }}
+                />
+              ) : (
+                <Mic 
+                  className="w-5 h-5" 
+                  style={{ color: colorTheme?.primary || '#3b82f6' }}
+                />
+              )}
+            </button>
           </div>
         </div>
       </div>
