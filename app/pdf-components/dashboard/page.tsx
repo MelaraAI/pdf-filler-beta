@@ -77,10 +77,16 @@ function App() {
     localStorage.setItem('colorTheme', JSON.stringify(newTheme));
   };
 
-  const setInstructionsWithRef = useCallback((newInstructions: string) => {
-    setInstructions(newInstructions);
-    instructionsRef.current = newInstructions;
-  }, []);
+  const setInstructionsWithRef = useCallback((newInstructions: string | ((prev: string) => string)) => {
+    if (typeof newInstructions === 'function') {
+      const updatedInstructions = newInstructions(instructions);
+      setInstructions(updatedInstructions);
+      instructionsRef.current = updatedInstructions;
+    } else {
+      setInstructions(newInstructions);
+      instructionsRef.current = newInstructions;
+    }
+  }, [instructions]);
 
   const handlePdfLoad = useCallback((file: File, signedUrl?: string) => {
     setPdfFile(file);
