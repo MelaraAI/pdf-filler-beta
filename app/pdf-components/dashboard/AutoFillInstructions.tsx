@@ -34,8 +34,18 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
   // Handler for Fill with AI button
   const handleFillWithAI = async () => {
   setAiLoading(true);
+  
+  // Debug logging for production
+  console.log('🚀 Sending to n8n:', {
+    instructions: instructions?.length ? `${instructions.substring(0, 50)}...` : 'empty',
+    fileName,
+    userId,
+    signedUrl: signedUrl ? `${signedUrl.substring(0, 50)}...` : 'null',
+    environment: process.env.NODE_ENV
+  });
+  
   try {
-    await fetch('https://n8n-9a4w.onrender.com/webhook/7305bc7d-f574-48b1-8a32-7bdf4641328c', {
+    const response = await fetch('https://n8n-9a4w.onrender.com/webhook/7305bc7d-f574-48b1-8a32-7bdf4641328c', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -45,8 +55,18 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
         signedUrl, // send signed URL to n8n 
       }),
     });
+    
+    console.log('🎯 n8n response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ n8n error response:', errorText);
+    } else {
+      console.log('✅ n8n webhook successful');
+    }
+    
   } catch (err) {
-    console.error(err);
+    console.error('💥 n8n fetch error:', err);
   } finally {
     setAiLoading(false);
   }
