@@ -7,6 +7,7 @@ import { FileText,
 } from 'lucide-react';
 // import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/theme-toggle';
 import ThemeCustomizer from '@/app/components/theme-customizer';
@@ -16,6 +17,8 @@ import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDro
 
 import { PDFUploader } from '../PDFUploader';
 import { SimplePDFViewer } from '../SimplePDFViewer';
+import { DownloadPopup } from '../DownloadPopup';
+import { useModifiedDocsSubscription } from '@/hooks/UseModifiedDocsSubscription';
 
 
 
@@ -41,6 +44,18 @@ function App() {
   const dropdownRef = useRef<SupabaseFileDropdownRef>(null);
   const { signOut, user, session, isLoading } = useAuth();
   const router = useRouter();
+  
+  // Download popup state
+  const [download, setDownload] = useState<{name: string; url: string} | null>(null);
+
+  // Stable callback for subscription
+  const handleNewFile = useCallback(({ filename, signedUrl }: { filename: string; signedUrl: string }) => {
+    console.log('🎉 Dashboard: Received new file notification:', { filename, signedUrl });
+    setDownload({ name: filename, url: signedUrl });
+  }, []);
+
+  // Subscribe to modified documents
+  useModifiedDocsSubscription(user?.id, handleNewFile);
 
   // Load saved theme
   useEffect(() => {
@@ -78,9 +93,45 @@ function App() {
     }
   }, []);
 
-  const handleFileSelect = useCallback((file: File) => {
+  const handleFileSelect = useCallback(async (file: File) => {
+    console.log('File selected from dropdown:', file.name);
     setPdfFile(file);
-  }, []);
+    
+    // Generate signed URL for the selected file
+    if (user && session) {
+      try {
+        const supabase = createClient();
+        
+        // Set session if needed
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+        
+        // Generate signed URL for the selected file
+        const filePath = `${user.id}/${file.name}`;
+        console.log('Generating signed URL for path:', filePath);
+        
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from('user-documents')
+          .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+          
+        if (!signedError && signedData?.signedUrl) {
+          setSignedUrl(signedData.signedUrl);
+          console.log('✅ Generated signed URL for selected file:', signedData.signedUrl);
+        } else {
+          console.error('❌ Failed to generate signed URL:', signedError);
+          setSignedUrl(null);
+        }
+      } catch (error) {
+        console.error('Error generating signed URL for selected file:', error);
+        setSignedUrl(null);
+      }
+    } else {
+      console.log('No user or session available for signed URL generation');
+      setSignedUrl(null);
+    }
+  }, [user, session]);
 
   // const downloadPDF = useCallback(() => {
   //   const link = document.createElement('a');
@@ -182,7 +233,11 @@ function App() {
           <SimplePDFViewer
             file={pdfFile}
             colorTheme={colorTheme}
-            onRemove={() => setPdfFile(null)}
+            onRemove={() => {
+              setPdfFile(null);
+              setSignedUrl(null); // Clear signed URL when removing file
+              console.log('Cleared PDF file and signed URL');
+            }}
             onRenderNoPdf={() => (
               <PDFUploader
                 onUpload={(file: File, signedUrl?: string) => {
@@ -217,6 +272,15 @@ function App() {
 
       {/* Theme customizer */}
       <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
+      
+      {/* Download popup for processed files */}
+      <DownloadPopup
+        isOpen={!!download}
+        onCloseAction={() => setDownload(null)}
+        fileName={download?.name || ''}
+        fileUrl={download?.url || ''}
+        colorTheme={colorTheme}
+      />
     </div>
   );
 }
