@@ -160,14 +160,60 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
 
         {sent ? (
           <motion.div
-            className="text-center space-y-4"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            className="text-center space-y-6"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="text-green-400 bg-green-900/20 px-4 py-3 rounded-xl border border-green-500/30">
-              ✅ Account created! Please check your email to verify your account.
-            </div>
+            <motion.div 
+              className={`px-6 py-4 rounded-2xl border-2 backdrop-blur-sm font-medium text-lg relative overflow-hidden cursor-pointer group transition-all duration-300 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}
+              style={{
+                background: theme === 'dark' 
+                  ? `linear-gradient(135deg, ${colorTheme.primary}20, ${colorTheme.secondary}15)` 
+                  : `linear-gradient(135deg, ${colorTheme.primary}10, ${colorTheme.secondary}08)`,
+                borderColor: `${colorTheme.primary}60`,
+                boxShadow: `0 10px 30px ${colorTheme.primary}20`,
+              }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+              whileHover={{ 
+                scale: 1.02,
+                boxShadow: `0 0 20px ${colorTheme.primary}80, 0 0 40px ${colorTheme.primary}40, 0 10px 30px ${colorTheme.primary}20`
+              }}
+            >
+              {/* Animated background shine effect */}
+              <motion.div
+                className="absolute inset-0 -skew-x-12"
+                style={{
+                  background: `linear-gradient(90deg, transparent, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.3)'}, transparent)`
+                }}
+                initial={{ x: '-100%' }}
+                animate={{ x: '200%' }}
+                transition={{ delay: 0.5, duration: 1.2, ease: "easeInOut" }}
+              />
+              <div className="relative z-10 flex items-center justify-center gap-3">
+                <motion.svg
+                  key={colorTheme.primary}
+                  initial={{ scale: 0, rotate: -90 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 200 }}
+                  className="w-16 h-16"
+                  style={{ 
+                    color: colorTheme.primary,
+                    fill: colorTheme.primary 
+                  }}
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </motion.svg>
+                <span>Account created! Please check your email to verify your account.</span>
+              </div>
+            </motion.div>
           </motion.div>
         ) : (
           <>

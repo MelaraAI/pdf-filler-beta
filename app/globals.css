@@ -78,6 +78,25 @@ body.hide-scrollbar::-webkit-scrollbar {
   }
 }
 
+/* Custom animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes moveBorder {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
 html, body {
   height: 100%;
   margin: 0;
