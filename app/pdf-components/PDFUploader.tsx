@@ -50,8 +50,6 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         return null;
       }
 
-      console.log('✅ File uploaded to user-documents successfully!');
-
       // Insert metadata (no signed URL stored in DB)
       const { error: dbError } = await supabase
         .from('unmodified-documents')
@@ -69,12 +67,7 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
         return null;
       }
 
-      console.log('✅ File metadata saved to database successfully!');
-
       // Generate a signed URL for immediate use (1 hour)
-      console.log('🔗 Generating signed URL for:', uploadPath);
-      console.log('🌍 Environment:', process.env.NODE_ENV);
-      console.log('🔑 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...');
       
       const { data: signedData, error: signedError } = await supabase.storage
         .from('user-documents')
@@ -88,9 +81,6 @@ export const PDFUploader = ({ onUpload, colorTheme }: PDFUploaderProps) => {
       }
 
       const signedUrl = signedData?.signedUrl;
-      console.log('✅ Signed URL generated successfully');
-      console.log('🔗 Signed URL (first 50 chars):', signedUrl?.substring(0, 50) + '...');
-      console.log('🔗 Full signed URL:', signedUrl);
 
       // Return the signed URL so it can be passed to n8n
       return signedUrl;

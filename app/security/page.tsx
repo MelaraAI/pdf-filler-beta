@@ -12,6 +12,8 @@ import { useAuth } from "@/lib/auth/AuthContext"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Shield, Smartphone, AlertTriangle } from "lucide-react"
 import { useEffect } from "react"
+import { useColorTheme } from '@/lib/use-color-theme'
+import SaucyLoader from '../components/SaucyLoader'
 
 interface SecurityFormState {
   ok: boolean;
@@ -60,6 +62,7 @@ const saveSecurity = async (): Promise<SecurityFormState> => {
 
 export default function SecurityPage() {
   const { user, session, isLoading } = useAuth();
+  const { colorTheme } = useColorTheme();
   const router = useRouter();
   const [enable2fa, setEnable2fa] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
@@ -91,12 +94,12 @@ export default function SecurityPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading...</p>
-        </div>
-      </div>
+      <SaucyLoader 
+        currentTheme={colorTheme}
+        isLoading={isLoading}
+        size="md"
+        message="Loading security settings"
+      />
     );
   }
 

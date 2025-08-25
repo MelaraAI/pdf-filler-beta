@@ -45,8 +45,6 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     e.preventDefault()
     setIsLoading(true)
     setErrorMessage("")
-
-    console.log("[LOGIN DEBUG] Attempting login for email:", email);
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -54,28 +52,8 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     })
 
     if (!error && data.user) {
-      console.log("[LOGIN DEBUG] Login successful!");
-      console.log("[LOGIN DEBUG] User data:", {
-        id: data.user.id,
-        email: data.user.email,
-        emailConfirmed: data.user.email_confirmed_at,
-        lastSignIn: data.user.last_sign_in_at,
-        createdAt: data.user.created_at
-      });
-      console.log("[LOGIN DEBUG] Session data:", {
-        accessToken: data.session?.access_token ? "Present" : "Missing",
-        refreshToken: data.session?.refresh_token ? "Present" : "Missing",
-        expiresAt: data.session?.expires_at
-      });
-      console.log("[LOGIN DEBUG] Redirecting to dashboard");
       router.push("/pdf-components/dashboard")
     } else {
-      console.log("[LOGIN DEBUG] Login failed!");
-      console.log("[LOGIN DEBUG] Error details:", {
-        message: error?.message,
-        status: error?.status,
-        name: error?.name
-      });
       setErrorMessage("Invalid email or password. Please try again.")
     }
 

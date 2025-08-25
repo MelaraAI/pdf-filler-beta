@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import Image from "next/image";
-import LoginForm from "@/app/components/login-form";
-import SignUpForm from "@/app/components/sign-up-form";
-import ChromaticBlob from "@/app/components/chromatic-blob";
 import { useTheme } from "next-themes";
-import ThemeToggle from "@/app/components/theme-toggle";
-import ThemeCustomizer from "@/app/components/theme-customizer";
-import FloatingElements from "@/app/components/floating-elements";
-import ParticleField from "@/app/components/particle-field";
-// import AnimatedText from "@/app/components/animated-text";
-import TypewriterText from "@/app/components/typewriter";
-import ZyfloCursor from "@/app/components/zyflo/mouse-style";
+import SaucyLoader from "@/app/components/SaucyLoader";
+
+// Lazy load heavy components with better splitting
+const LoginForm = lazy(() => import("@/app/components/login-form"));
+const SignUpForm = lazy(() => import("@/app/components/sign-up-form"));
+const ChromaticBlob = lazy(() => import("@/app/components/chromatic-blob"));
+const ThemeToggle = lazy(() => import("@/app/components/theme-toggle"));
+const ThemeCustomizer = lazy(() => import("@/app/components/theme-customizer"));
+const FloatingElements = lazy(() => import("@/app/components/floating-elements"));
+const ParticleField = lazy(() => import("@/app/components/particle-field"));
+const TypewriterText = lazy(() => import("@/app/components/typewriter"));
+const ZyfloCursor = lazy(() => import("@/app/components/zyflo/mouse-style"));
 
 const defaultTheme = {
   name: "Ocean",
@@ -36,7 +38,6 @@ export default function Home() {
   // Check loading state only - no auto redirect
   useEffect(() => {
     const checkUser = async () => {
-      console.log("[HOME PAGE DEBUG] Loading home page - no authentication required");
       // Just check loading state, don't auto-redirect
       setLoading(false);
     };
@@ -59,21 +60,21 @@ export default function Home() {
     };
   }, []);
 
-  const handleThemeChange = (newTheme: typeof defaultTheme) => {
+  const handleThemeChange = useCallback((newTheme: typeof defaultTheme) => {
     setColorTheme(newTheme);
     localStorage.setItem("colorTheme", JSON.stringify(newTheme));
-  };
+  }, []);
 
   if (loading) {
-    console.log("[HOME PAGE DEBUG] Still loading home page...");
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-lg">Checking login status...</p>
-      </main>
+      <SaucyLoader 
+        currentTheme={colorTheme}
+        isLoading={loading}
+        size="md"
+        message="Checking login status"
+      />
     );
   }
-
-  console.log("[HOME PAGE DEBUG] Home page loaded - showing main interface");
 
   return (
     <div
@@ -86,24 +87,30 @@ export default function Home() {
       }}
     >
       {/* Zyflo Custom Cursor */}
-      <ZyfloCursor
-        containerRef={pageContainerRef}
-        variant="inverted"
-        label="Interactive Cursor"
-        srOnly="Custom Interactive Cursor"
-        color={colorTheme.primary}
-      />
+      <Suspense fallback={null}>
+        <ZyfloCursor
+          containerRef={pageContainerRef}
+          variant="inverted"
+          label="Interactive Cursor"
+          srOnly="Custom Interactive Cursor"
+          color={colorTheme.primary}
+        />
+      </Suspense>
 
       {/* Backgrounds */}
-      <ParticleField />
-      <FloatingElements />
-      <div className="fixed inset-0 z-0">
-        <ChromaticBlob className="absolute top-[-20%] left-[-10%]" size={600} color1={colorTheme.primary} color2={colorTheme.secondary} speed={30} isDark={theme === "dark"} />
-        <ChromaticBlob className="absolute bottom-[-30%] right-[-15%]" size={800} color1={colorTheme.secondary} color2={colorTheme.accent} speed={40} isDark={theme === "dark"} />
-        <ChromaticBlob className="absolute top-[40%] right-[20%]" size={400} color1={colorTheme.accent} color2={colorTheme.primary} speed={20} isDark={theme === "dark"} />
-      </div>
+      <Suspense fallback={null}>
+        <ParticleField />
+        <FloatingElements />
+        <div className="fixed inset-0 z-0">
+          <ChromaticBlob className="absolute top-[-20%] left-[-10%]" size={600} color1={colorTheme.primary} color2={colorTheme.secondary} speed={30} isDark={theme === "dark"} />
+          <ChromaticBlob className="absolute bottom-[-30%] right-[-15%]" size={800} color1={colorTheme.secondary} color2={colorTheme.accent} speed={40} isDark={theme === "dark"} />
+          <ChromaticBlob className="absolute top-[40%] right-[20%]" size={400} color1={colorTheme.accent} color2={colorTheme.primary} speed={20} isDark={theme === "dark"} />
+        </div>
+      </Suspense>
 
-      <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
+      <Suspense fallback={null}>
+        <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
+      </Suspense>
 
       <div className="relative z-10">
         <header className="w-full px-1 py-6">
@@ -138,17 +145,18 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}
             >
-              <ThemeToggle />
+              <Suspense fallback={null}>
+                <ThemeToggle />
+              </Suspense>
               <Button
                 variant="ghost"
                 className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
                 style={{
                   color: theme === "dark" ? "white" : "#333333"
                 }}
-                                    onClick={() => {
-                      console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
-                      setShowLogin(true);
-                    }}
+                onClick={() => {
+                  window.location.href = '/login-styled';
+                }}
               >
                 Login
               </Button>
@@ -165,12 +173,14 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, type: "spring", damping: 20 }}
               >
-                <TypewriterText
-                  text="The Next Generation"
-                  className="mb-2 text-4xl font-bold leading-tight tracking-tighter md:text-6xl"
-                  speed={80}
-                  delay={300}
-                />
+                <Suspense fallback={<div className="mb-2 text-4xl font-bold leading-tight tracking-tighter md:text-6xl opacity-0">Loading...</div>}>
+                  <TypewriterText
+                    text="The Next Generation"
+                    className="mb-2 text-4xl font-bold leading-tight tracking-tighter md:text-6xl"
+                    speed={80}
+                    delay={300}
+                  />
+                </Suspense>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -210,8 +220,7 @@ export default function Home() {
                       boxShadow: `0 10px 30px ${colorTheme.primary}20`,
                     }}
                     onClick={() => {
-                      console.log("[HOME PAGE DEBUG] Get Started button clicked - showing signup form");
-                      setShowSignUp(true);
+                      window.location.href = '/sign-up-styled';
                     }}
                   >
                     Get Started <ChevronRight className="ml-2 h-5 w-5" />
@@ -226,14 +235,12 @@ export default function Home() {
                 transition={{ duration: 0.6, type: "spring", damping: 20 }}
                 className="w-full max-w-md"
               >
-                <SignUpForm 
-                  onCancelAction={() => setShowSignUp(false)} 
-                  onLoginRedirectAction={() => {
-                    setShowSignUp(false);
-                    setShowLogin(true);
-                  }}
-                  colorTheme={colorTheme} 
-                />
+                <Suspense fallback={<SaucyLoader currentTheme={colorTheme} isLoading={true} size="sm" message="Loading form" />}>
+                  <SignUpForm 
+                    onCancelAction={() => setShowSignUp(false)} 
+                    colorTheme={colorTheme} 
+                  />
+                </Suspense>
               </motion.div>
             ) : (
               <motion.div
@@ -243,15 +250,17 @@ export default function Home() {
                 transition={{ duration: 0.6, type: "spring", damping: 20 }}
                 className="w-full max-w-md"
               >
-                <LoginForm 
-                  onCancelAction={() => setShowLogin(false)} 
-                  onSignUpRedirect={() => {
-                    setShowLogin(false)
-                    setShowSignUp(true)
-                  }}
-                  colorTheme={colorTheme}
-                  preventAutoRedirect={true}
-                />
+                <Suspense fallback={<SaucyLoader currentTheme={colorTheme} isLoading={true} size="sm" message="Loading form" />}>
+                  <LoginForm 
+                    onCancelAction={() => setShowLogin(false)} 
+                    onSignUpRedirect={() => {
+                      setShowLogin(false)
+                      window.location.href = '/sign-up-styled';
+                    }}
+                    colorTheme={colorTheme}
+                    preventAutoRedirect={true}
+                  />
+                </Suspense>
               </motion.div>
             )}
           </div>

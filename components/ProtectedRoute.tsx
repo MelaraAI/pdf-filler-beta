@@ -1,6 +1,8 @@
 'use client';
 
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useColorTheme } from '@/lib/use-color-theme';
+import SaucyLoader from '@/app/components/SaucyLoader';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -10,6 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, session, isLoading } = useAuth();
+  const { colorTheme } = useColorTheme();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,12 +30,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (isLoading) {
   // ...removed debug log...
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
+      <SaucyLoader 
+        currentTheme={colorTheme}
+        isLoading={isLoading}
+        size="md"
+        message="Checking authentication"
+      />
     );
   }
 

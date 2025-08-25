@@ -1,23 +1,24 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, 
-  //Download 
-} from 'lucide-react';
-// import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import ThemeToggle from '@/app/components/theme-toggle';
-import ThemeCustomizer from '@/app/components/theme-customizer';
-import UserAvatar from '@/app/components/UserAvatar';
-import AutoFillInstructions from './AutoFillInstructions';
-import SupabaseFileDropdown, { SupabaseFileDropdownRef } from './SupabaseFileDropdown';
+import SaucyLoader from '../../components/SaucyLoader';
 
-import { PDFUploader } from '../PDFUploader';
-import { SimplePDFViewer } from '../SimplePDFViewer';
-import { DownloadPopup } from '../DownloadPopup';
+// Lazy load heavy components
+const ThemeToggle = lazy(() => import('@/app/components/theme-toggle'));
+const ThemeCustomizer = lazy(() => import('@/app/components/theme-customizer'));
+const UserAvatar = lazy(() => import('@/app/components/UserAvatar'));
+const AutoFillInstructions = lazy(() => import('./AutoFillInstructions'));
+const SupabaseFileDropdown = lazy(() => import('./SupabaseFileDropdown').then(module => ({ default: module.default })));
+const PDFUploader = lazy(() => import('../PDFUploader').then(module => ({ default: module.PDFUploader })));
+const SimplePDFViewer = lazy(() => import('../SimplePDFViewer').then(module => ({ default: module.SimplePDFViewer })));
+const DownloadPopup = lazy(() => import('../DownloadPopup').then(module => ({ default: module.DownloadPopup })));
+
+import type { SupabaseFileDropdownRef } from './SupabaseFileDropdown';
 import { useModifiedDocsSubscription } from '@/hooks/UseModifiedDocsSubscription';
 
 
@@ -50,7 +51,6 @@ function App() {
 
   // Stable callback for subscription
   const handleNewFile = useCallback(({ filename, signedUrl }: { filename: string; signedUrl: string }) => {
-    console.log('🎉 Dashboard: Received new file notification:', { filename, signedUrl });
     setDownload({ name: filename, url: signedUrl });
   }, []);
 
@@ -100,7 +100,6 @@ function App() {
   }, []);
 
   const handleFileSelect = useCallback(async (file: File) => {
-    console.log('File selected from dropdown:', file.name);
     setPdfFile(file);
     
     // Generate signed URL for the selected file
@@ -116,7 +115,6 @@ function App() {
         
         // Generate signed URL for the selected file
         const filePath = `${user.id}/${file.name}`;
-        console.log('Generating signed URL for path:', filePath);
         
         const { data: signedData, error: signedError } = await supabase.storage
           .from('user-documents')
@@ -124,17 +122,13 @@ function App() {
           
         if (!signedError && signedData?.signedUrl) {
           setSignedUrl(signedData.signedUrl);
-          console.log('✅ Generated signed URL for selected file:', signedData.signedUrl);
         } else {
-          console.error('❌ Failed to generate signed URL:', signedError);
           setSignedUrl(null);
         }
-      } catch (error) {
-        console.error('Error generating signed URL for selected file:', error);
+      } catch {
         setSignedUrl(null);
       }
     } else {
-      console.log('No user or session available for signed URL generation');
       setSignedUrl(null);
     }
   }, [user, session]);
@@ -159,12 +153,12 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
+      <SaucyLoader 
+        currentTheme={colorTheme}
+        isLoading={isLoading}
+        size="md"
+        message="Loading dashboard"
+      />
     );
   }
 
@@ -215,7 +209,9 @@ function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
+            <Suspense fallback={null}>
+              <ThemeToggle />
+            </Suspense>
             {/* <Button
               onClick={downloadPDF}
               disabled={!pdfFile}
@@ -227,7 +223,9 @@ function App() {
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
             </Button> */}
-            <UserAvatar colorTheme={colorTheme} onLogout={handleLogout} />
+            <Suspense fallback={null}>
+              <UserAvatar colorTheme={colorTheme} onLogout={handleLogout} />
+            </Suspense>
           </div>
         </div>
       </motion.header>
@@ -242,7 +240,6 @@ function App() {
             onRemove={() => {
               setPdfFile(null);
               setSignedUrl(null); // Clear signed URL when removing file
-              console.log('Cleared PDF file and signed URL');
             }}
             onRenderNoPdf={() => (
               <PDFUploader

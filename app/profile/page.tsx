@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload, User } from "lucide-react"
 import { useEffect } from "react"
 import Image from "next/image"
+import { useColorTheme } from '@/lib/use-color-theme'
+import SaucyLoader from '../components/SaucyLoader'
 
 interface ProfileFormState {
   ok: boolean;
@@ -50,6 +52,7 @@ const saveProfile = async (prevState: ProfileFormState | null, formData: FormDat
 
 export default function ProfilePage() {
   const { user, session, isLoading } = useAuth();
+  const { colorTheme } = useColorTheme();
   const router = useRouter();
   const [preview, setPreview] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -79,12 +82,12 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white">Loading...</p>
-        </div>
-      </div>
+      <SaucyLoader 
+        currentTheme={colorTheme}
+        isLoading={isLoading}
+        size="md"
+        message="Loading profile"
+      />
     );
   }
 

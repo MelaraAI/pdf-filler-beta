@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Palette, X, Check, Plus } from "lucide-react"
 import { useTheme } from "next-themes"
+import SaucyLoader from "./SaucyLoader"
 
 interface ColorTheme {
   name: string
@@ -111,6 +112,7 @@ interface ThemeCustomizerProps {
 
 export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: ThemeCustomizerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [customColors, setCustomColors] = useState({
     primary: "#4f46e5",
     secondary: "#06b6d4", 
@@ -118,7 +120,16 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
   })
   const { theme } = useTheme()
 
-  const handleCustomTheme = () => {
+  const handleThemeChange = async (selectedTheme: ColorTheme) => {
+    setIsLoading(true)
+    // Simulate loading time for theme application
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    onThemeChangeAction(selectedTheme)
+    setIsLoading(false)
+    setIsOpen(false)
+  }
+
+  const handleCustomTheme = async () => {
     const customTheme: ColorTheme = {
       name: "Custom",
       primary: customColors.primary,
@@ -126,11 +137,23 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
       accent: customColors.accent,
       background: "from-slate-950 to-gray-950"
     }
+    setIsLoading(true)
+    // Simulate loading time for custom theme application
+    await new Promise(resolve => setTimeout(resolve, 1500))
     onThemeChangeAction(customTheme)
+    setIsLoading(false)
+    setIsOpen(false)
   }
 
   return (
     <>
+      <SaucyLoader 
+        currentTheme={currentTheme}
+        isLoading={isLoading}
+        size="md"
+        message="Applying theme"
+      />
+      
       <motion.div
         className="fixed right-4 top-1/2 z-50 -translate-y-1/2"
         initial={{ x: 100, opacity: 0 }}
@@ -316,7 +339,7 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
                         style={{
                           background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
                         }}
-                        onClick={() => onThemeChangeAction(colorTheme)}
+                        onClick={() => handleThemeChange(colorTheme)}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}

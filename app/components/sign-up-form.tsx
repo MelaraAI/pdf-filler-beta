@@ -27,11 +27,10 @@ interface ColorTheme {
 
 interface SignUpFormProps {
   onCancelAction: () => void
-  onLoginRedirectAction: () => void
   colorTheme: ColorTheme
 }
 
-export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colorTheme }: SignUpFormProps) {
+export default function SignUpForm({ onCancelAction, colorTheme }: SignUpFormProps) {
   const { theme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
@@ -55,39 +54,14 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
       return;
     }
 
-    console.log("[SIGNUP DEBUG] Attempting signup for email:", email);
-
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     })
 
     if (!error) {
-      console.log("[SIGNUP DEBUG] Signup request successful!");
-      console.log("[SIGNUP DEBUG] User data:", {
-        id: data.user?.id,
-        email: data.user?.email,
-        emailConfirmed: data.user?.email_confirmed_at,
-        createdAt: data.user?.created_at,
-        needsConfirmation: !data.session
-      });
-      if (data.session) {
-        console.log("[SIGNUP DEBUG] Session created immediately:", {
-          accessToken: data.session.access_token ? "Present" : "Missing",
-          refreshToken: data.session.refresh_token ? "Present" : "Missing",
-          expiresAt: data.session.expires_at
-        });
-      } else {
-        console.log("[SIGNUP DEBUG] No session created - email confirmation required");
-      }
       setSent(true)
     } else {
-      console.log("[SIGNUP DEBUG] Signup failed!");
-      console.log("[SIGNUP DEBUG] Error details:", {
-        message: error?.message,
-        status: error?.status,
-        name: error?.name
-      });
       setErrorMessage(error.message || "Error creating account. Please try again.")
     }
 
@@ -98,20 +72,8 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
   useEffect(() => {
     // Only listen for sign up events, don't check existing sessions
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[SIGNUP DEBUG] Auth state changed:", event, session?.user?.email || "No user");
-      if (session) {
-        console.log("[SIGNUP DEBUG] Full session details:", {
-          userId: session.user.id,
-          userEmail: session.user.email,
-          accessToken: session.access_token ? "Present" : "Missing",
-          refreshToken: session.refresh_token ? "Present" : "Missing",
-          expiresAt: session.expires_at,
-          tokenType: session.token_type
-        });
-      }
       // Only redirect on confirmed sign up, not existing sessions
       if (event === 'SIGNED_IN' && session) {
-        console.log("[SIGNUP DEBUG] User signed up and confirmed, redirecting to dashboard");
         router.push("/pdf-components/dashboard")
       }
     })
@@ -369,7 +331,9 @@ export default function SignUpForm({ onCancelAction, onLoginRedirectAction, colo
                 Already have an account?{' '}
                 <button
                   type="button"
-                  onClick={() => onLoginRedirectAction?.()}
+                  onClick={() => {
+                    window.location.href = '/login-styled';
+                  }}
                   className={`font-medium underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
                 >
                   Login
