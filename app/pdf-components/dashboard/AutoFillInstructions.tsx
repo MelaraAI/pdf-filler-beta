@@ -31,13 +31,12 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
 }: Props) {
   const [aiLoading, setAiLoading] = useState(false);
   
-  // Voice recording state
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
-  const recognitionRef = useRef<unknown | null>(null);
-  const interimTranscriptRef = useRef<string>('');
-  const finalTranscriptRef = useRef<string>('');
-  const manualStopRef = useRef<boolean>(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+  const isStoppedRef = useRef(false);
+  const currentTranscriptRef = useRef('');
 
   // Initialize speech recognition
   useEffect(() => {
@@ -46,124 +45,98 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        
-        recognition.continuous = true;
+        recognition.continuous = true; // Keep recording continuously
         recognition.interimResults = true;
         recognition.lang = 'en-US';
-        
-        recognition.onstart = () => {
-          setRecording(true);
-          setTranscribing(false);
-        };
-        
+
+        // Set event handlers
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recognition.onresult = (event: any) => {
-          let interimTranscript = '';
-          let finalTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-            } else {
-              interimTranscript += transcript;
-            }
+          // Only process results if we're not stopped
+          if (isStoppedRef.current) {
+            console.log('🛑 Ignoring speech results - recording was stopped');
+            return;
           }
           
-          // Update the instructions field in real-time using callback to get current state
-          setInstructions((currentInstructions: string) => {
-            const baseInstructions = currentInstructions
-              .replace(interimTranscriptRef.current, '')
-              .replace(finalTranscriptRef.current, '');
-            
-            if (finalTranscript) {
-              finalTranscriptRef.current += finalTranscript;
-              return baseInstructions + finalTranscriptRef.current + interimTranscript;
-            } else if (interimTranscript) {
-              interimTranscriptRef.current = interimTranscript;
-              return baseInstructions + finalTranscriptRef.current + interimTranscript;
-            }
-            
-            return currentInstructions;
+          console.log('Speech recognition result received');
+          
+          // Build the complete transcript from results
+          let newTranscript = '';
+          for (let i = 0; i < event.results.length; i++) {
+            newTranscript += event.results[i][0].transcript;
+          }
+          
+          // Store current transcript and preserve existing instructions
+          currentTranscriptRef.current = newTranscript;
+          
+          // Append to existing instructions instead of overwriting
+          setInstructions(prev => {
+            const existingText = prev || '';
+            // If there's existing text and it doesn't end with a space, add one
+            const separator = existingText && !existingText.endsWith(' ') && !existingText.endsWith('\n') ? ' ' : '';
+            return existingText + separator + newTranscript;
           });
+          
+          console.log('Transcript updated:', newTranscript);
         };
-        
+
+        recognition.onstart = () => {
+          console.log('🎤 Speech recognition started');
+          setRecording(true);
+          isStoppedRef.current = false;
+          currentTranscriptRef.current = '';
+        };
+
+        recognition.onend = () => {
+          console.log('🛑 Speech recognition ended');
+          setRecording(false);
+          setTranscribing(false);
+          // No auto-restart - user must manually start again
+        };
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recognition.onerror = (event: any) => {
           console.error('Speech recognition error:', event.error);
-          // Don't stop on no-speech or audio-capture errors, just continue
-          if (event.error === 'no-speech' || event.error === 'audio-capture') {
-            console.log('Ignoring no-speech/audio-capture error');
-            return;
+          
+          // Handle specific errors
+          if (event.error === 'not-allowed') {
+            alert('Microphone access was denied. Please allow microphone access and try again.');
+          } else if (event.error === 'aborted') {
+            console.log('Speech recognition was aborted (this is normal when stopping)');
+          } else if (event.error === 'audio-capture') {
+            alert('No microphone was found. Please check your microphone and try again.');
+          } else if (event.error === 'network') {
+            alert('Network error occurred. Please check your connection and try again.');
+          } else {
+            console.warn('Speech recognition error:', event.error);
           }
           
           setRecording(false);
           setTranscribing(false);
-          manualStopRef.current = true; // Prevent auto-restart after error
-          alert(`Speech recognition error: ${event.error}`);
         };
-        
-        recognition.onend = () => {
-          console.log('🏁 Speech recognition ended. Manual stop flag:', manualStopRef.current);
-          
-          // Check if this was a manual stop
-          if (manualStopRef.current) {
-            console.log('✋ Manual stop detected - ending recognition permanently');
-            setRecording(false);
-            setTranscribing(false);
-            
-            // Clean up transcript refs
-            interimTranscriptRef.current = '';
-            finalTranscriptRef.current = '';
-            
-            // Reset the manual stop flag for next session
-            setTimeout(() => {
-              manualStopRef.current = false;
-              console.log('🔄 Manual stop flag reset for next session');
-            }, 500);
-          } else {
-            // Only auto-restart if not manually stopped
-            console.log('🔄 Auto-restarting recognition (not manually stopped)');
-            setTimeout(() => {
-              try {
-                // Double-check that we still shouldn't stop
-                if (!manualStopRef.current && recognitionRef.current) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (recognitionRef.current as any).start();
-                  console.log('✅ Recognition restarted successfully');
-                }
-              } catch (error) {
-                console.error('❌ Failed to restart speech recognition:', error);
-                setRecording(false);
-                setTranscribing(false);
-                // Clean up transcript refs on restart failure
-                interimTranscriptRef.current = '';
-                finalTranscriptRef.current = '';
-              }
-            }, 100); // Small delay to avoid conflicts
-          }
-        };
-        
+
         recognitionRef.current = recognition;
+        console.log('Speech recognition initialized successfully');
+      } else {
+        console.warn('Speech recognition not supported in this browser');
       }
     }
-  }, [setInstructions]); // Only depend on setInstructions callback
+  }, [setInstructions]);
 
   // Cleanup effect to stop recording when component unmounts
   useEffect(() => {
+    const currentRecognition = recognitionRef.current;
     return () => {
-      if (recognitionRef.current && recording) {
-        console.log('🧹 Component unmounting - stopping speech recognition');
-        manualStopRef.current = true;
+      if (currentRecognition) {
+        console.log('Component unmounting - stopping speech recognition');
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (recognitionRef.current as any).stop();
+          currentRecognition.abort();
         } catch (error) {
           console.error('Error stopping recognition on unmount:', error);
         }
       }
     };
-  }, [recording]);
+  }, []);
 
   // Voice recording functions
   const startRecording = async () => {
@@ -172,15 +145,28 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
       return;
     }
     
+    // Don't start if already recording
+    if (recording) {
+      console.log('⚠️ Recording is already in progress');
+      return;
+    }
+    
     try {
       console.log('🎤 Starting speech recognition...');
       
-      // Reset transcript refs and manual stop flag
-      interimTranscriptRef.current = '';
-      finalTranscriptRef.current = '';
-      manualStopRef.current = false;
+      // Request microphone permissions first
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('🎤 Microphone permission granted');
+      } catch (permError) {
+        console.error('❌ Microphone permission denied:', permError);
+        alert('Please allow microphone access to use voice recording.');
+        return;
+      }
       
-      // Update UI state immediately
+      // Reset stopped flag and clear current transcript
+      isStoppedRef.current = false;
+      currentTranscriptRef.current = '';
       setRecording(true);
       setTranscribing(false);
       
@@ -192,35 +178,40 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
       // Reset UI state on error
       setRecording(false);
       setTranscribing(false);
-      alert('Failed to start speech recognition. Please try again.');
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('already started')) {
+          alert('Recording is already in progress. Please stop the current recording first.');
+        } else if (error.message.includes('not-allowed')) {
+          alert('Please allow microphone access to use voice recording.');
+        } else {
+          alert('Failed to start speech recognition. Please try again.');
+        }
+      } else {
+        alert('Failed to start speech recognition. Please try again.');
+      }
     }
   };
 
   const stopRecording = () => {
     if (recognitionRef.current) {
-      console.log('🛑 Stop button clicked - manual stop initiated');
+      console.log('🛑 Stop button clicked - stopping recording immediately');
       
-      // Set manual stop flag FIRST and ensure it's set
-      manualStopRef.current = true;
+      // Set stopped flag FIRST to prevent any further processing
+      isStoppedRef.current = true;
       
-      // Force UI update immediately
+      // Update UI immediately
       setRecording(false);
       setTranscribing(false);
       
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (recognitionRef.current as any).stop();
-        console.log('✅ Speech recognition stop() called successfully');
+        console.log('✅ Speech recognition stopped successfully');
       } catch (error) {
         console.error('❌ Error stopping speech recognition:', error);
       }
-      
-      // Additional safety: clear refs after a short delay to ensure cleanup
-      setTimeout(() => {
-        interimTranscriptRef.current = '';
-        finalTranscriptRef.current = '';
-        console.log('🧹 Transcript refs cleared');
-      }, 100);
     } else {
       console.warn('⚠️ No recognition instance to stop');
     }
