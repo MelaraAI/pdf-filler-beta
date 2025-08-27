@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 export function SignUpForm({
   className,
@@ -58,6 +59,16 @@ export function SignUpForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Back to Home Button */}
+      <div className="flex justify-start">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>

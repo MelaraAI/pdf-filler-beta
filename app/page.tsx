@@ -103,8 +103,6 @@ export default function Home() {
         <ChromaticBlob className="absolute top-[40%] right-[20%]" size={400} color1={colorTheme.accent} color2={colorTheme.primary} speed={20} isDark={theme === "dark"} />
       </div>
 
-      <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
-
       <div className="relative z-10">
         <header className="w-full px-1 py-6">
           <div className="flex items-center justify-between w-full">
@@ -139,19 +137,22 @@ export default function Home() {
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}
             >
               <ThemeToggle />
-              <Button
-                variant="ghost"
-                className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
-                style={{
-                  color: theme === "dark" ? "white" : "#333333"
-                }}
-                                    onClick={() => {
-                      console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
-                      setShowLogin(true);
-                    }}
-              >
-                Login
-              </Button>
+              <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} inline={true} />
+              {!showLogin && !showSignUp && (
+                <Button
+                  variant="ghost"
+                  className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
+                  style={{
+                    color: theme === "dark" ? "white" : "#333333"
+                  }}
+                  onClick={() => {
+                    console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
+                    setShowLogin(true);
+                  }}
+                >
+                  Login
+                </Button>
+              )}
             </motion.div>
           </div>
         </header>
