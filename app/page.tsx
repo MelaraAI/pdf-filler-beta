@@ -98,19 +98,13 @@ export default function Home() {
       </Suspense>
 
       {/* Backgrounds */}
-      <Suspense fallback={null}>
-        <ParticleField />
-        <FloatingElements />
-        <div className="fixed inset-0 z-0">
-          <ChromaticBlob className="absolute top-[-20%] left-[-10%]" size={600} color1={colorTheme.primary} color2={colorTheme.secondary} speed={30} isDark={theme === "dark"} />
-          <ChromaticBlob className="absolute bottom-[-30%] right-[-15%]" size={800} color1={colorTheme.secondary} color2={colorTheme.accent} speed={40} isDark={theme === "dark"} />
-          <ChromaticBlob className="absolute top-[40%] right-[20%]" size={400} color1={colorTheme.accent} color2={colorTheme.primary} speed={20} isDark={theme === "dark"} />
-        </div>
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} />
-      </Suspense>
+      <ParticleField />
+      <FloatingElements />
+      <div className="fixed inset-0 z-0">
+        <ChromaticBlob className="absolute top-[-20%] left-[-10%]" size={600} color1={colorTheme.primary} color2={colorTheme.secondary} speed={30} isDark={theme === "dark"} />
+        <ChromaticBlob className="absolute bottom-[-30%] right-[-15%]" size={800} color1={colorTheme.secondary} color2={colorTheme.accent} speed={40} isDark={theme === "dark"} />
+        <ChromaticBlob className="absolute top-[40%] right-[20%]" size={400} color1={colorTheme.accent} color2={colorTheme.primary} speed={20} isDark={theme === "dark"} />
+      </div>
 
       <div className="relative z-10">
         <header className="w-full px-1 py-6">
@@ -145,21 +139,23 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}
             >
-              <Suspense fallback={null}>
-                <ThemeToggle />
-              </Suspense>
-              <Button
-                variant="ghost"
-                className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
-                style={{
-                  color: theme === "dark" ? "white" : "#333333"
-                }}
-                onClick={() => {
-                  window.location.href = '/login-styled';
-                }}
-              >
-                Login
-              </Button>
+              <ThemeToggle />
+              <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} inline={true} />
+              {!showLogin && !showSignUp && (
+                <Button
+                  variant="ghost"
+                  className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
+                  style={{
+                    color: theme === "dark" ? "white" : "#333333"
+                  }}
+                  onClick={() => {
+                    console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
+                    setShowLogin(true);
+                  }}
+                >
+                  Login
+                </Button>
+              )}
             </motion.div>
           </div>
         </header>

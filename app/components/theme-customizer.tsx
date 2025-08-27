@@ -108,9 +108,10 @@ const colorThemes: ColorTheme[] = [
 interface ThemeCustomizerProps {
   onThemeChangeAction: (theme: ColorTheme) => void
   currentTheme: ColorTheme
+  inline?: boolean
 }
 
-export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: ThemeCustomizerProps) {
+export default function ThemeCustomizer({ onThemeChangeAction, currentTheme, inline = false }: ThemeCustomizerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [customColors, setCustomColors] = useState({
@@ -155,21 +156,21 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme }: T
       />
       
       <motion.div
-        className="fixed right-4 top-1/2 z-50 -translate-y-1/2"
-        initial={{ x: 100, opacity: 0 }}
+        className={inline ? "relative" : "fixed right-4 top-1/2 z-50 -translate-y-1/2"}
+        initial={{ x: inline ? 0 : 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
+        transition={{ delay: inline ? 0 : 1, duration: 0.5 }}
       >
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300"
+          className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 ${inline ? "p-2" : ""}`}
           style={{
             background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.secondary})`,
             boxShadow: `0 10px 30px ${currentTheme.primary}20`
           }}
           size="icon"
         >
-          <Palette className="h-5 w-5 text-white" />
+          <Palette className={`${inline ? "h-4 w-4" : "h-5 w-5"} text-white`} />
         </Button>
       </motion.div>
 
