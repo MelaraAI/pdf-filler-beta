@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Palette, X, Check, Plus } from "lucide-react"
+import { Palette, X, Check, Plus, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 import SaucyLoader from "./SaucyLoader"
 
@@ -119,7 +119,7 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme, inl
     secondary: "#06b6d4", 
     accent: "#0891b2"
   })
-  const { theme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   const handleThemeChange = async (selectedTheme: ColorTheme) => {
     setIsLoading(true)
@@ -316,6 +316,60 @@ export default function ThemeCustomizer({ onThemeChangeAction, currentTheme, inl
                   >
                     <Plus className="w-3 h-3 mr-1" />
                     Apply Custom Theme
+                  </Button>
+                </div>
+              </div>
+
+              {/* Light/Dark Mode Toggle */}
+              <div className="mb-6 p-4 rounded-2xl border flex-shrink-0"
+                style={{
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(148, 163, 184, 0.1)",
+                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(148, 163, 184, 0.2)"
+                }}
+              >
+                <h4 className="text-sm font-medium mb-3"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  Appearance Mode
+                </h4>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`flex-1 rounded-lg transition-all duration-300 ${
+                      theme === "light" 
+                        ? "bg-white/20 dark:bg-white/20" 
+                        : "hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
+                    }`}
+                    style={{
+                      backgroundColor: theme === "light" 
+                        ? "rgba(148, 163, 184, 0.2)"
+                        : "transparent",
+                      color: theme === "dark" ? "white" : "#333333"
+                    }}
+                    onClick={() => setTheme("light")}
+                  >
+                    <Sun className="h-4 w-4 mr-2" />
+                    Light
+                  </Button>
+                  <Button
+                    variant="ghost" 
+                    size="sm"
+                    className={`flex-1 rounded-lg transition-all duration-300 ${
+                      theme === "dark"
+                        ? "bg-white/20 dark:bg-white/20"
+                        : "hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50"
+                    }`}
+                    style={{
+                      backgroundColor: theme === "dark"
+                        ? "rgba(255, 255, 255, 0.2)"
+                        : "transparent",
+                      color: theme === "dark" ? "white" : "#333333"
+                    }}
+                    onClick={() => setTheme("dark")}
+                  >
+                    <Moon className="h-4 w-4 mr-2" />
+                    Dark
                   </Button>
                 </div>
               </div>

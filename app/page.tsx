@@ -12,7 +12,6 @@ import SaucyLoader from "@/app/components/SaucyLoader";
 const LoginForm = lazy(() => import("@/app/components/login-form"));
 const SignUpForm = lazy(() => import("@/app/components/sign-up-form"));
 const ChromaticBlob = lazy(() => import("@/app/components/chromatic-blob"));
-const ThemeToggle = lazy(() => import("@/app/components/theme-toggle"));
 const ThemeCustomizer = lazy(() => import("@/app/components/theme-customizer"));
 const FloatingElements = lazy(() => import("@/app/components/floating-elements"));
 const ParticleField = lazy(() => import("@/app/components/particle-field"));
@@ -49,6 +48,10 @@ export default function Home() {
     const saved = localStorage.getItem("colorTheme");
     if (saved) {
       setColorTheme(JSON.parse(saved));
+    } else {
+      // Set default theme to Ocean
+      setColorTheme(defaultTheme);
+      localStorage.setItem("colorTheme", JSON.stringify(defaultTheme));
     }
   }, []);
 
@@ -139,22 +142,55 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}
             >
-              <ThemeToggle />
               <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} inline={true} />
               {!showLogin && !showSignUp && (
-                <Button
-                  variant="ghost"
-                  className="zyflo-hover rounded-full border border-slate-300/50 dark:border-white/20 px-6 text-sm backdrop-blur-sm hover:bg-slate-200/50 dark:hover:bg-white/10 dark:text-white transition-all duration-300"
-                  style={{
-                    color: theme === "dark" ? "white" : "#333333"
-                  }}
-                  onClick={() => {
-                    console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
-                    setShowLogin(true);
-                  }}
-                >
-                  Login
-                </Button>
+                <>
+                  <motion.div
+                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                    style={{
+                      color: theme === "dark" ? "white" : "#333333"
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      transition: { duration: 0.2 }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => window.location.href = '/pricing'}
+                  >
+                    Pricing
+                  </motion.div>
+                  <motion.div
+                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                    style={{
+                      color: theme === "dark" ? "white" : "#333333"
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      transition: { duration: 0.2 }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => window.location.href = '/faq'}
+                  >
+                    FAQ
+                  </motion.div>
+                  <motion.div
+                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                    style={{
+                      color: theme === "dark" ? "white" : "#333333"
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      transition: { duration: 0.2 }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
+                      setShowLogin(true);
+                    }}
+                  >
+                    Login
+                  </motion.div>
+                </>
               )}
             </motion.div>
           </div>
@@ -219,7 +255,7 @@ export default function Home() {
                       window.location.href = '/sign-up-styled';
                     }}
                   >
-                    Get Started <ChevronRight className="ml-2 h-5 w-5" />
+                    Get Started for Free <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
                 </motion.div>
               </motion.div>

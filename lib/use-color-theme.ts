@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 export interface ColorTheme {
   name: string
@@ -45,7 +45,7 @@ export function useColorTheme() {
   const [colorTheme, setColorTheme] = useState<ColorTheme>(defaultColorThemes[0])
 
   useEffect(() => {
-    // Load theme from localStorage
+    // Load theme from localStorage only once on mount
     const savedTheme = localStorage.getItem("colorTheme")
     if (savedTheme) {
       try {
@@ -55,9 +55,9 @@ export function useColorTheme() {
         console.error("Failed to parse saved theme:", error)
       }
     }
-  }, [])
+  }, []) // Empty dependency array ensures this only runs once
 
-  const changeColorTheme = (newTheme: ColorTheme) => {
+  const changeColorTheme = useCallback((newTheme: ColorTheme) => {
     setColorTheme(newTheme)
     localStorage.setItem("colorTheme", JSON.stringify(newTheme))
     
@@ -66,7 +66,7 @@ export function useColorTheme() {
     root.style.setProperty("--theme-primary", newTheme.primary)
     root.style.setProperty("--theme-secondary", newTheme.secondary)
     root.style.setProperty("--theme-accent", newTheme.accent)
-  }
+  }, [])
 
   return {
     colorTheme,

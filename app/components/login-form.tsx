@@ -52,7 +52,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     })
 
     if (!error && data.user) {
-      router.push("/pdf-components/dashboard")
+      router.push("/dashboard")
     } else {
       setErrorMessage("Invalid email or password. Please try again.")
     }
@@ -85,7 +85,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
       // Only redirect on sign in events, not existing sessions
       if (event === 'SIGNED_IN' && session) {
         console.log("[LOGIN DEBUG] User signed in, redirecting to dashboard");
-        router.push("/pdf-components/dashboard")
+        router.push("/dashboard")
       }
     })
 

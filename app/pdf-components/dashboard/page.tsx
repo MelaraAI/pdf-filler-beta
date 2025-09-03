@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { FileText } from 'lucide-react';
+import { FileText, Home } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -151,6 +151,10 @@ function App() {
     }
   }, [signOut]);
 
+  const handleGoHome = useCallback(() => {
+    router.push('/dashboard');
+  }, [router]);
+
   if (isLoading) {
     return (
       <SaucyLoader 
@@ -191,6 +195,19 @@ function App() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
+            <motion.button
+              onClick={handleGoHome}
+              className="p-2 rounded-lg border hover:bg-white/10 dark:hover:bg-slate-700/30 transition-all duration-200"
+              style={{
+                background: `linear-gradient(135deg, ${colorTheme.secondary}15, ${colorTheme.primary}15)`,
+                borderColor: `${colorTheme.secondary}30`,
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Back to PDF Tools"
+            >
+              <Home className="w-5 h-5" style={{ color: colorTheme.secondary }} />
+            </motion.button>
             <div
               className="p-2 rounded-lg border"
               style={{
