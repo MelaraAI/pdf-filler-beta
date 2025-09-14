@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
+import { useColorTheme } from "@/lib/use-color-theme"
 
 interface Agent {
   id: string
@@ -16,13 +17,26 @@ interface Agent {
   route?: string
 }
 
-interface AgentCardProps {
-  agent: Agent
+interface ColorTheme {
+  name: string
+  primary: string
+  secondary: string
+  accent: string
+  background: string
 }
 
-export function AgentCard({ agent }: AgentCardProps) {
+interface AgentCardProps {
+  agent: Agent
+  colorTheme?: ColorTheme
+}
+
+export function AgentCard({ agent, colorTheme }: AgentCardProps) {
   const { theme } = useTheme()
   const router = useRouter()
+  const { colorTheme: defaultColorTheme } = useColorTheme()
+  
+  // Use passed colorTheme or default from hook
+  const activeColorTheme = colorTheme || defaultColorTheme
 
   const handleRun = () => {
     if (agent.route) {
@@ -59,11 +73,14 @@ export function AgentCard({ agent }: AgentCardProps) {
         <div className="flex flex-col items-center gap-1 flex-shrink-0">
           <Button 
             size="sm" 
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4"
+            className="text-white rounded-lg px-4 transition-all duration-300 hover:scale-105 hover:shadow-lg"
             onClick={handleRun}
+            style={{
+              background: `linear-gradient(135deg, ${activeColorTheme.primary}, ${activeColorTheme.secondary})`,
+              boxShadow: `0 4px 15px ${activeColorTheme.primary}30`
+            }}
           >
-            <Play className="w-3 h-3 mr-1" />
-            Run
+            <Play className="w-3 h-3" />
           </Button>
           {agent.isPro && (
             <span className="text-xs opacity-70"

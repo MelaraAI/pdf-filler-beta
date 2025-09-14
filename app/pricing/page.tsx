@@ -45,6 +45,24 @@ export default function PricingPage() {
       setColorTheme(defaultTheme)
       localStorage.setItem("colorTheme", JSON.stringify(defaultTheme))
     }
+
+    // Hide scrollbar globally for this page
+    const style = document.createElement('style')
+    style.textContent = `
+      body::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+      html {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+    `
+    document.head.appendChild(style)
+
+    return () => {
+      document.head.removeChild(style)
+    }
   }, [])
 
   const plans = [
@@ -52,83 +70,82 @@ export default function PricingPage() {
       name: "Free",
       monthlyPrice: 0,
       annualPrice: 0,
-      description: "Try 100+ AI agents and build your own, completely free.",
-      features: ["Unlimited AI agent drafts", "1,000 runs per month"],
-      buttonText: "Current Plan",
+      description: "Get started with essential PDF tools and explore our platform.",
+      features: [
+        "500 credits per month", 
+        "Access to basic PDF tools:",
+        "• PDF Viewer & Simple Editing",
+        "• PDF Splitter & Merger", 
+        "• Basic PDF Converter",
+        "File size limit: 10MB",
+        "Community support"
+      ],
+      buttonText: "Get Started Free",
       buttonVariant: "secondary" as const,
-      isCurrentPlan: true,
+      isCurrentPlan: false,
     },
     {
       name: "Starter",
       monthlyPrice: 20,
       annualPrice: 16,
-      description: "Build and launch custom Agents.",
+      description: "Perfect for professionals who need more power and flexibility.",
       features: [
+        "2,000 credits per month",
         "Everything in Free, plus:",
-        "Publish up to 5 agents",
-        "5,000 runs per month",
-        "Unlimited users",
-        "Just Me",
+        "• PDF OCR & Text Recognition",
+        "• PDF Password Protection",
+        "• Advanced PDF Converter",
+        "• PDF Watermarking",
+        "• PDF Form Filling",
+        "File size limit: 50MB",
+        "Priority email support",
+        "💡 Most popular for small teams!"
       ],
       buttonText: "Choose Starter",
       buttonVariant: "default" as const,
     },
     {
       name: "Pro",
-      monthlyPrice: 60,
-      annualPrice: 48,
-      description: "Scale your Agents with powerful automatic triggers.",
+      monthlyPrice: 30,
+      annualPrice: 24,
+      description: "Unlock all premium features for maximum productivity.",
       features: [
+        "5,000 credits per month",
         "Everything in Starter, plus:",
-        "Publish up to 15 agents",
-        "25,000 runs per month",
-        "Unlimited users",
-        "Up to 5 collaborators",
-        "Trigger agents via API",
-        "Trigger agents via Email",
-        "Scheduled agent runs",
-        "MCP",
+        "• All PDF Tools Unlocked",
+        "• PDF Digital Signatures",
+        "• Advanced PDF Annotations",
+        "• Batch Processing",
+        "• API Access",
+        "• Custom PDF Templates",
+        "File size limit: 200MB",
+        "Priority phone & chat support",
+        "🚀 Best value for power users!"
       ],
       buttonText: "Choose Pro",
       buttonVariant: "default" as const,
       isPopular: true,
     },
     {
-      name: "Agency",
-      monthlyPrice: 175,
-      annualPrice: 140,
-      description: "For MindStudio resellers and integration partners.",
-      features: [
-        "Everything in Pro, plus:",
-        "Publish up to 50 agents",
-        "100,000 runs per month",
-        "Unlimited users",
-        "Up to 15 collaborators",
-        "Embed AI Agents",
-      ],
-      buttonText: "Contact Us",
-      buttonVariant: "outline" as const,
-      isContactUs: true,
-    },
-    {
-      name: "Custom",
-      monthlyPrice: null,
+      name: "Lifetime",
+      monthlyPrice: 299,
       annualPrice: null,
-      description: "Advanced AI infrastructure, security, and support.",
+      description: "One-time payment. Pro features forever. Limited time offer!",
       features: [
-        "Everything in Pro, plus:",
-        "Publish unlimited agents",
-        "Unlimited runs per month",
-        "Unlimited users",
-        "Unlimited collaborators",
-        "Bring your own API Keys",
-        "SLA / SSO",
-        "Premium support",
-        "Team training included",
+        "✨ ALL Pro benefits FOREVER",
+        "5,000+ credits every month",
+        "Complete PDF toolkit access",
+        "Future feature updates included",
+        "Unlimited file processing",
+        "Premium support for life",
+        "No monthly fees ever again",
+        "🔥 Save $1,000+ over 3 years",
+        "⚡ Limited availability",
+        "🎯 Best deal - pay once, use forever!"
       ],
-      buttonText: "Contact Us",
+      buttonText: "Get Lifetime Access",
       buttonVariant: "outline" as const,
-      isContactUs: true,
+      isContactUs: false,
     },
   ]
 
@@ -136,9 +153,11 @@ export default function PricingPage() {
     <div
       className={`min-h-screen w-full bg-gradient-to-b ${
         theme === "dark" ? colorTheme.background : "from-slate-50 to-slate-100"
-      } transition-all duration-1000`}
+      } transition-all duration-1000 overflow-x-hidden`}
       style={{
-        color: theme === "dark" ? "white" : "#333333"
+        color: theme === "dark" ? "white" : "#333333",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
       {/* Header */}
@@ -191,10 +210,10 @@ export default function PricingPage() {
       </header>
 
       {/* Main Content */}
-      <div className="px-6 pb-12">
-        <div className="mx-auto max-w-7xl">
+      <div className="px-6 pb-12 min-h-screen flex flex-col justify-center">
+        <div className="mx-auto max-w-7xl w-full flex flex-col justify-center min-h-[calc(100vh-120px)]">
           <motion.div
-            className="mb-8 text-center"
+            className="mb-12 text-center"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, type: "spring", damping: 20 }}
@@ -205,8 +224,11 @@ export default function PricingPage() {
                 backgroundImage: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
               }}
             >
-              Choose a Plan
+              Choose Your PDF Plan
             </h1>
+            <p className="text-lg opacity-80 mb-6" style={{ color: theme === "dark" ? "white" : "#333333" }}>
+              Unlock powerful PDF tools with flexible credit-based pricing
+            </p>
 
             {/* Billing Toggle */}
             <div className="flex items-center justify-center gap-4 mb-8">
@@ -254,21 +276,23 @@ export default function PricingPage() {
           </motion.div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {plans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ 
-                  y: -5,
-                  boxShadow: `0 25px 50px ${colorTheme.primary}20`,
-                  transition: { duration: 0.3 } 
-                }}
-              >
+          <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-8 max-w-6xl w-full">
+              {plans.map((plan, index) => (
+                <motion.div
+                  key={plan.name}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  whileHover={{ 
+                    y: -5,
+                    boxShadow: `0 25px 50px ${colorTheme.primary}20`,
+                    transition: { duration: 0.3 } 
+                  }}
+                  className="flex justify-center"
+                >
                 <Card
-                  className="relative overflow-visible p-6 h-full backdrop-blur-lg border transition-all duration-300"
+                  className="relative overflow-visible p-6 h-full backdrop-blur-lg border transition-all duration-300 w-full max-w-sm mx-auto"
                   style={{
                     backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.9)",
                     borderColor: plan.isPopular 
@@ -289,6 +313,19 @@ export default function PricingPage() {
                     </div>
                   )}
 
+                  {plan.name === "Lifetime" && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <span 
+                        className="px-3 py-1 rounded-full text-sm font-medium text-white whitespace-nowrap animate-pulse"
+                        style={{
+                          background: "linear-gradient(135deg, #f59e0b, #ef4444)"
+                        }}
+                      >
+                        🔥 Limited Time
+                      </span>
+                    </div>
+                  )}
+
                   <div className="mb-6">
                     <h3 className="text-xl font-bold mb-2"
                       style={{ color: theme === "dark" ? "white" : "#333333" }}
@@ -296,7 +333,23 @@ export default function PricingPage() {
                       {plan.name}
                     </h3>
                     <div className="mb-4">
-                      {plan.monthlyPrice === null ? (
+                      {plan.name === "Lifetime" ? (
+                        <>
+                          <div className="text-3xl font-bold"
+                            style={{ color: theme === "dark" ? "white" : "#333333" }}
+                          >
+                            $299
+                          </div>
+                          <div className="text-sm opacity-70"
+                            style={{ color: theme === "dark" ? "white" : "#333333" }}
+                          >
+                            one-time payment
+                          </div>
+                          <div className="text-xs mt-1 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white inline-block">
+                            🔥 Limited Time: Save $1,000+
+                          </div>
+                        </>
+                      ) : plan.monthlyPrice === null ? (
                         <div className="text-2xl font-bold opacity-70"
                           style={{ color: theme === "dark" ? "white" : "#333333" }}
                         >
@@ -313,7 +366,7 @@ export default function PricingPage() {
                             <div className="text-sm opacity-70"
                               style={{ color: theme === "dark" ? "white" : "#333333" }}
                             >
-                              per month + usage, billed annually
+                              {isAnnual ? "per month, billed annually" : "per month"}
                             </div>
                           )}
                         </>
@@ -375,6 +428,7 @@ export default function PricingPage() {
                 </Card>
               </motion.div>
             ))}
+            </div>
           </div>
         </div>
       </div>

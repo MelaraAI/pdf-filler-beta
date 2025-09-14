@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { AgentCard } from "@/app/components/agent-card"
 import { useTheme } from "next-themes"
-import Image from "next/image"
 import UserSettings from "@/app/components/user-settings"
 
 interface ColorTheme {
@@ -68,6 +67,7 @@ export default function Dashboard() {
       icon: "🔗",
       iconBg: "bg-green-500",
       isPro: true,
+      route: "/pdf-merger"
     },
     {
       id: "pdf-splitter",
@@ -178,21 +178,6 @@ export default function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, type: "spring", damping: 20 }}
           >
-            <motion.div
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20"
-              style={{ 
-                background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})` 
-              }}
-            >
-              <Image 
-                src="/m-logo-clear.png" 
-                alt="Melara AI Logo" 
-                width={42} 
-                height={42} 
-                className="object-contain"
-              />
-            </motion.div>
-            <span className="text-xl font-bold">PDF Tools Dashboard</span>
           </motion.div>
 
           <motion.div
@@ -288,7 +273,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
                 >
-                  <AgentCard agent={agent} />
+                  <AgentCard agent={agent} colorTheme={colorTheme} />
                 </motion.div>
               ))}
             </div>
@@ -319,7 +304,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
                 >
-                  <AgentCard agent={agent} />
+                  <AgentCard agent={agent} colorTheme={colorTheme} />
                 </motion.div>
               ))}
             </div>

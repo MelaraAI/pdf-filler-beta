@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion';
 import { FileText, Home } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import SaucyLoader from '../../components/SaucyLoader';
 
@@ -13,12 +12,10 @@ const ThemeToggle = lazy(() => import('@/app/components/theme-toggle'));
 const ThemeCustomizer = lazy(() => import('@/app/components/theme-customizer'));
 const UserAvatar = lazy(() => import('@/app/components/UserAvatar'));
 const AutoFillInstructions = lazy(() => import('./AutoFillInstructions'));
-const SupabaseFileDropdown = lazy(() => import('./SupabaseFileDropdown').then(module => ({ default: module.default })));
 const PDFUploader = lazy(() => import('../PDFUploader').then(module => ({ default: module.PDFUploader })));
 const SimplePDFViewer = lazy(() => import('../SimplePDFViewer').then(module => ({ default: module.SimplePDFViewer })));
 const DownloadPopup = lazy(() => import('../DownloadPopup').then(module => ({ default: module.DownloadPopup })));
 
-import type { SupabaseFileDropdownRef } from './SupabaseFileDropdown';
 import { useModifiedDocsSubscription } from '@/hooks/UseModifiedDocsSubscription';
 
 
@@ -42,7 +39,6 @@ function App() {
   // }, []);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const instructionsRef = useRef('');
-  const dropdownRef = useRef<SupabaseFileDropdownRef>(null);
   const { signOut, user, session, isLoading } = useAuth();
   const router = useRouter();
   
@@ -94,44 +90,8 @@ function App() {
   }, []);
 
   const handlePdfUpload = useCallback(() => {
-    if (dropdownRef.current) {
-      dropdownRef.current.refresh();
-    }
+    console.log('PDF uploaded to dashboard');
   }, []);
-
-  const handleFileSelect = useCallback(async (file: File) => {
-    setPdfFile(file);
-    
-    // Generate signed URL for the selected file
-    if (user && session) {
-      try {
-        const supabase = createClient();
-        
-        // Set session if needed
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token
-        });
-        
-        // Generate signed URL for the selected file
-        const filePath = `${user.id}/${file.name}`;
-        
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from('user-documents')
-          .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
-          
-        if (!signedError && signedData?.signedUrl) {
-          setSignedUrl(signedData.signedUrl);
-        } else {
-          setSignedUrl(null);
-        }
-      } catch {
-        setSignedUrl(null);
-      }
-    } else {
-      setSignedUrl(null);
-    }
-  }, [user, session]);
 
   // const downloadPDF = useCallback(() => {
   //   const link = document.createElement('a');
@@ -284,9 +244,7 @@ function App() {
               fileName={pdfFile?.name || null}
             />
           </div>
-          <div className="flex-1 min-h-0">
-            <SupabaseFileDropdown ref={dropdownRef} colorTheme={colorTheme} onFileSelect={handleFileSelect} />
-          </div>
+          {/* File dropdown moved to home page */}
         </div>
       </div>
 
