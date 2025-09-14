@@ -11,6 +11,7 @@ import SaucyLoader from "@/app/components/SaucyLoader";
 // Lazy load heavy components with better splitting
 const LoginForm = lazy(() => import("@/app/components/login-form"));
 const SignUpForm = lazy(() => import("@/app/components/sign-up-form"));
+const PricingModal = lazy(() => import("@/app/components/PricingModal"));
 const ChromaticBlob = lazy(() => import("@/app/components/chromatic-blob"));
 const ThemeCustomizer = lazy(() => import("@/app/components/theme-customizer"));
 const FloatingElements = lazy(() => import("@/app/components/floating-elements"));
@@ -30,6 +31,7 @@ export default function Home() {
   const { theme } = useTheme();
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(true);
   const pageContainerRef = useRef<HTMLDivElement>(null);
@@ -155,7 +157,7 @@ export default function Home() {
                       transition: { duration: 0.2 }
                     }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => window.location.href = '/pricing'}
+                    onClick={() => setShowPricing(true)}
                   >
                     Pricing
                   </motion.div>
@@ -297,6 +299,15 @@ export default function Home() {
             )}
           </div>
         </main>
+
+        {/* Pricing Modal */}
+        <Suspense fallback={null}>
+          <PricingModal 
+            isOpen={showPricing}
+            onClose={() => setShowPricing(false)}
+            colorTheme={colorTheme}
+          />
+        </Suspense>
       </div>
     </div>
   );
