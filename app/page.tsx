@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
+import { useState, useEffect, useRef, lazy, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import SaucyLoader from "@/app/components/SaucyLoader";
 
 // Lazy load heavy components with better splitting
-const LoginForm = lazy(() => import("@/app/components/login-form"));
-const SignUpForm = lazy(() => import("@/app/components/sign-up-form"));
 const PricingModal = lazy(() => import("@/app/components/PricingModal"));
 const ChromaticBlob = lazy(() => import("@/app/components/chromatic-blob"));
 const ThemeCustomizer = lazy(() => import("@/app/components/theme-customizer"));
@@ -28,9 +26,12 @@ const defaultTheme = {
 };
 
 export default function Home() {
+  // Redirect to dashboard for easier development
+  useEffect(() => {
+    window.location.href = '/dashboard';
+  }, []);
+
   const { theme } = useTheme();
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignUp, setShowSignUp] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(true);
@@ -145,68 +146,60 @@ export default function Home() {
               transition={{ duration: 0.8, type: "spring", damping: 20, delay: 0.2 }}
             >
               <ThemeCustomizer onThemeChangeAction={handleThemeChange} currentTheme={colorTheme} inline={true} />
-              {!showLogin && !showSignUp && (
-                <>
-                  <motion.div
-                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
-                    style={{
-                      color: theme === "dark" ? "white" : "#333333"
-                    }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      transition: { duration: 0.2 }
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowPricing(true)}
-                  >
-                    Pricing
-                  </motion.div>
-                  <motion.div
-                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
-                    style={{
-                      color: theme === "dark" ? "white" : "#333333"
-                    }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      transition: { duration: 0.2 }
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => window.location.href = '/faq'}
-                  >
-                    FAQ
-                  </motion.div>
-                  <motion.div
-                    className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
-                    style={{
-                      color: theme === "dark" ? "white" : "#333333"
-                    }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      transition: { duration: 0.2 }
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      console.log("[HOME PAGE DEBUG] Login button clicked - showing login form");
-                      setShowLogin(true);
-                    }}
-                  >
-                    Login
-                  </motion.div>
-                </>
-              )}
+              <motion.div
+                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                style={{
+                  color: theme === "dark" ? "white" : "#333333"
+                }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowPricing(true)}
+              >
+                Pricing
+              </motion.div>
+              <motion.div
+                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                style={{
+                  color: theme === "dark" ? "white" : "#333333"
+                }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/faq'}
+              >
+                FAQ
+              </motion.div>
+              <motion.div
+                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10"
+                style={{
+                  color: theme === "dark" ? "white" : "#333333"
+                }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/login-styled'}
+              >
+                Login
+              </motion.div>
             </motion.div>
           </div>
         </header>
 
         <main className="container mx-auto px-4 py-12">
           <div className="flex min-h-[80vh] flex-col items-center justify-center">
-            {!showLogin && !showSignUp ? (
-              <motion.div
-                className="max-w-2xl text-center"
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, type: "spring", damping: 20 }}
-              >
+            <motion.div
+              className="max-w-2xl text-center"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, type: "spring", damping: 20 }}
+            >
                 <Suspense fallback={<div className="mb-2 text-4xl font-bold leading-tight tracking-tighter md:text-6xl opacity-0">Loading...</div>}>
                   <TypewriterText
                     text="The Next Generation"
@@ -261,42 +254,6 @@ export default function Home() {
                   </Button>
                 </motion.div>
               </motion.div>
-            ) : showSignUp ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, rotateX: -15 }}
-                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                exit={{ opacity: 0, scale: 0.9, rotateX: 15 }}
-                transition={{ duration: 0.6, type: "spring", damping: 20 }}
-                className="w-full max-w-md"
-              >
-                <Suspense fallback={<SaucyLoader currentTheme={colorTheme} isLoading={true} size="sm" message="Loading form" />}>
-                  <SignUpForm 
-                    onCancelAction={() => setShowSignUp(false)} 
-                    colorTheme={colorTheme} 
-                  />
-                </Suspense>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, rotateX: -15 }}
-                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                exit={{ opacity: 0, scale: 0.9, rotateX: 15 }}
-                transition={{ duration: 0.6, type: "spring", damping: 20 }}
-                className="w-full max-w-md"
-              >
-                <Suspense fallback={<SaucyLoader currentTheme={colorTheme} isLoading={true} size="sm" message="Loading form" />}>
-                  <LoginForm 
-                    onCancelAction={() => setShowLogin(false)} 
-                    onSignUpRedirect={() => {
-                      setShowLogin(false)
-                      window.location.href = '/sign-up-styled';
-                    }}
-                    colorTheme={colorTheme}
-                    preventAutoRedirect={true}
-                  />
-                </Suspense>
-              </motion.div>
-            )}
           </div>
         </main>
 
@@ -304,7 +261,7 @@ export default function Home() {
         <Suspense fallback={null}>
           <PricingModal 
             isOpen={showPricing}
-            onClose={() => setShowPricing(false)}
+            onCloseAction={() => setShowPricing(false)}
             colorTheme={colorTheme}
           />
         </Suspense>

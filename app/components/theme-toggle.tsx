@@ -4,7 +4,7 @@ import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Moon, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/app/components/ui/button"
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()

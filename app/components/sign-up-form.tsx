@@ -1,348 +1,131 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/app/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
-import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
+export function SignUpForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
-interface ColorTheme {
-  name: string
-  primary: string
-  secondary: string
-  accent: string
-  background: string
-}
-
-interface SignUpFormProps {
-  onCancelAction: () => void
-  colorTheme: ColorTheme
-}
-
-export default function SignUpForm({ onCancelAction, colorTheme }: SignUpFormProps) {
-  const { theme } = useTheme()
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [passwordsMatch, setPasswordsMatch] = useState(true)
-  const [sent, setSent] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMessage("")
-
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match. Please check and try again.");
+    if (password !== repeatPassword) {
+      setError("Passwords do not match");
       setIsLoading(false);
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    if (!error) {
-      setSent(true)
-    } else {
-      setErrorMessage(error.message || "Error creating account. Please try again.")
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/protected`,
+        },
+      });
+      if (error) throw error;
+      router.push("/auth/sign-up-success");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false)
-  }
-
-  // Only redirect after successful signup - no auto-redirects
-  useEffect(() => {
-    // Only listen for sign up events, don't check existing sessions
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only redirect on confirmed sign up, not existing sessions
-      if (event === 'SIGNED_IN' && session) {
-        router.push("/pdf-components/dashboard")
-      }
-    })
-
-    return () => {
-      listener.subscription.unsubscribe()
-    }
-  }, [router])
+  };
 
   return (
-    <motion.div
-      className="overflow-hidden rounded-3xl bg-white/5 dark:bg-white/5 bg-white/80 p-8 backdrop-blur-lg border border-white/10 dark:border-white/10 border-slate-200/50"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{
-        boxShadow: `0 25px 50px ${colorTheme.primary}20`,
-        transition: { duration: 0.3 },
-      }}
-    >
-      <div className="mb-6 flex items-center">
-        <motion.div whileHover={{ scale: 1.1, rotate: -10 }} whileTap={{ scale: 0.9 }}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`mr-2 rounded-full ${theme === 'dark' ? 'text-white hover:text-white' : 'text-gray-800 hover:text-slate-900'} hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50`}
-            onClick={onCancelAction}
-          >
-            <ArrowLeft className="h-5 w-5" />
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Back to Home Button */}
+      <div className="flex justify-start">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
           </Button>
-        </motion.div>
-        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Create Account</h2>
+        </Link>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {errorMessage && (
-          <motion.div
-            className="text-red-500 bg-red-900/20 px-4 py-3 rounded-xl text-center font-medium border border-red-500/30"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {errorMessage}
-          </motion.div>
-        )}
-
-        {sent ? (
-          <motion.div
-            className="text-center space-y-6"
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <motion.div 
-              className={`px-6 py-4 rounded-2xl border-2 backdrop-blur-sm font-medium text-lg relative overflow-hidden cursor-pointer group transition-all duration-300 ${
-                theme === 'dark' ? 'text-white' : 'text-gray-800'
-              }`}
-              style={{
-                background: theme === 'dark' 
-                  ? `linear-gradient(135deg, ${colorTheme.primary}20, ${colorTheme.secondary}15)` 
-                  : `linear-gradient(135deg, ${colorTheme.primary}10, ${colorTheme.secondary}08)`,
-                borderColor: `${colorTheme.primary}60`,
-                boxShadow: `0 10px 30px ${colorTheme.primary}20`,
-              }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
-              whileHover={{ 
-                scale: 1.02,
-                boxShadow: `0 0 20px ${colorTheme.primary}80, 0 0 40px ${colorTheme.primary}40, 0 10px 30px ${colorTheme.primary}20`
-              }}
-            >
-              {/* Animated background shine effect */}
-              <motion.div
-                className="absolute inset-0 -skew-x-12"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.3)'}, transparent)`
-                }}
-                initial={{ x: '-100%' }}
-                animate={{ x: '200%' }}
-                transition={{ delay: 0.5, duration: 1.2, ease: "easeInOut" }}
-              />
-              <div className="relative z-10 flex items-center justify-center gap-3">
-                <motion.svg
-                  key={colorTheme.primary}
-                  initial={{ scale: 0, rotate: -90 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 200 }}
-                  className="w-16 h-16"
-                  style={{ 
-                    color: colorTheme.primary,
-                    fill: colorTheme.primary 
-                  }}
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </motion.svg>
-                <span>Account created! Please check your email to verify your account.</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : (
-          <>
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-            >
-              <Label htmlFor="email" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                Email
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }}>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Sign up</CardTitle>
+          <CardDescription>Create a new account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSignUp}>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
+                  placeholder="m@example.com"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
                 />
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-            >
-              <Label htmlFor="password" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                Password
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }} className="relative">
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
+                  required
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    // Check if passwords match when typing in password field
-                    if (confirmPassword && e.target.value) {
-                      setPasswordsMatch(e.target.value === confirmPassword)
-                    } else {
-                      setPasswordsMatch(true)
-                    }
-                  }}
-                  placeholder="Create a password"
-                  required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
-                >
-                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <Label htmlFor="confirmPassword" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                Confirm Password
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }} className="relative">
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                </div>
                 <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value)
-                    // Check if passwords match when typing
-                    if (password && e.target.value) {
-                      setPasswordsMatch(password === e.target.value)
-                    } else {
-                      setPasswordsMatch(true)
-                    }
-                  }}
-                  onBlur={() => {
-                    // Final check when user leaves the field
-                    if (password && confirmPassword) {
-                      setPasswordsMatch(password === confirmPassword)
-                    }
-                  }}
-                  placeholder="Confirm your password"
+                  id="repeat-password"
+                  type="password"
                   required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300 ${!passwordsMatch && confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  value={repeatPassword}
+                  onChange={(e) => setRepeatPassword(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
-                >
-                  {showConfirmPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
-              </motion.div>
-              {!passwordsMatch && confirmPassword && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-red-500 text-sm mt-1 flex items-center gap-1"
-                >
-                  <span>⚠️</span> Passwords do not match
-                </motion.div>
-              )}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.5 }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 15px 40px ${colorTheme.primary}30`,
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-xl py-6 text-lg font-medium text-white transition-all duration-300"
-                style={{
-                  background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
-                  boxShadow: `0 10px 30px ${colorTheme.primary}20`,
-                }}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating Account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating an account..." : "Sign up"}
               </Button>
-            </motion.div>
-            
-            {/* Login link */}
-            <motion.div
-              className="text-center mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-            >
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.href = '/login-styled';
-                  }}
-                  className={`font-medium underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-                >
-                  Login
-                </button>
-              </p>
-            </motion.div>
-          </>
-        )}
-      </form>
-    </motion.div>
-  )
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Already have an account?{" "}
+              <Link href="/auth/login" className="underline underline-offset-4">
+                Login
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/app/components/ui/button"
+import { Input } from "@/app/components/ui/input"
+import { Label } from "@/app/components/ui/label"
 import { Palette, X, Check, Plus, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 import SaucyLoader from "./SaucyLoader"

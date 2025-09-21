@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Search, Star } from "lucide-react"
+import { Input } from "@/app/components/ui/input"
 import { AgentCard } from "@/app/components/agent-card"
 import { useTheme } from "next-themes"
 import UserSettings from "@/app/components/user-settings"
@@ -28,6 +27,8 @@ const defaultTheme: ColorTheme = {
 export default function Dashboard() {
   const { theme } = useTheme()
   const [colorTheme, setColorTheme] = useState<ColorTheme>(defaultTheme)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [bookmarkedTools, setBookmarkedTools] = useState<string[]>([])
 
   useEffect(() => {
     const saved = localStorage.getItem("colorTheme")
@@ -43,11 +44,31 @@ export default function Dashboard() {
       setColorTheme(defaultTheme)
       localStorage.setItem("colorTheme", JSON.stringify(defaultTheme))
     }
+
+    // Load bookmarked tools
+    const savedBookmarks = localStorage.getItem("bookmarkedTools")
+    if (savedBookmarks) {
+      try {
+        setBookmarkedTools(JSON.parse(savedBookmarks))
+      } catch (error) {
+        console.error("Failed to parse saved bookmarks:", error)
+        setBookmarkedTools([])
+      }
+    }
   }, [])
 
   const handleThemeChange = (newTheme: ColorTheme) => {
     setColorTheme(newTheme)
     localStorage.setItem("colorTheme", JSON.stringify(newTheme))
+  }
+
+  const toggleBookmark = (toolId: string) => {
+    const newBookmarks = bookmarkedTools.includes(toolId)
+      ? bookmarkedTools.filter(id => id !== toolId)
+      : [...bookmarkedTools, toolId]
+    
+    setBookmarkedTools(newBookmarks)
+    localStorage.setItem("bookmarkedTools", JSON.stringify(newBookmarks))
   }
 
   const pdfTools = [
@@ -146,6 +167,21 @@ export default function Dashboard() {
     },
   ]
 
+  // Filter tools based on search term
+  const filteredPdfTools = pdfTools.filter(tool =>
+    tool.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tool.description.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const filteredAdvancedPdfTools = advancedPdfTools.filter(tool =>
+    tool.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tool.description.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Get bookmarked tools from both sections
+  const allTools = [...pdfTools, ...advancedPdfTools]
+  const bookmarkedToolsList = allTools.filter(tool => bookmarkedTools.includes(tool.id))
+
   const handleLogout = () => {
     window.location.href = '/'
   }
@@ -222,30 +258,59 @@ export default function Dashboard() {
                 />
                 <Input
                   placeholder="Search tools..."
-                  className="w-80 pl-9 pr-16 h-12 rounded-xl border backdrop-blur-lg"
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                  className="w-80 pl-9 pr-4 h-12 rounded-xl border backdrop-blur-lg"
                   style={{
                     backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.8)",
                     borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(148, 163, 184, 0.3)",
                     color: theme === "dark" ? "white" : "#333333"
                   }}
                 />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs"
-                  style={{ color: theme === "dark" ? "rgb(148, 163, 184)" : "rgb(100, 116, 139)" }}
-                >
-                  ⌘+K
-                </span>
               </div>
-              <Button 
-                className="text-white font-medium transition-all duration-300"
-                style={{
-                  background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
-                  boxShadow: `0 10px 30px ${colorTheme.primary}20`,
-                }}
-              >
-                Build New Tool
-              </Button>
             </div>
           </motion.div>
+
+          {/* Bookmarked Tools Section */}
+          {bookmarkedToolsList.length > 0 && (
+            <motion.section
+              className="mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  <Star className="w-6 h-6" style={{ color: colorTheme.primary }} />
+                  Bookmarked Tools
+                </h2>
+                <p className="opacity-70"
+                  style={{ color: theme === "dark" ? "white" : "#333333" }}
+                >
+                  Your favorite PDF tools for quick access.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bookmarkedToolsList.map((agent, index) => (
+                  <motion.div
+                    key={agent.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                  >
+                    <AgentCard 
+                      agent={agent} 
+                      colorTheme={colorTheme}
+                      isBookmarked={true}
+                      onToggleBookmark={toggleBookmark}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
 
           <motion.section
             className="mb-12"
@@ -253,30 +318,39 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-2"
-                style={{ color: theme === "dark" ? "white" : "#333333" }}
-              >
-                Essential PDF Tools
-              </h2>
-              <p className="opacity-70"
-                style={{ color: theme === "dark" ? "white" : "#333333" }}
-              >
-                Core PDF utilities for everyday document tasks.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pdfTools.map((agent, index) => (
-                <motion.div
-                  key={agent.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                >
-                  <AgentCard agent={agent} colorTheme={colorTheme} />
-                </motion.div>
-              ))}
-            </div>
+            {filteredPdfTools.length > 0 && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold mb-2"
+                    style={{ color: theme === "dark" ? "white" : "#333333" }}
+                  >
+                    Essential PDF Tools
+                  </h2>
+                  <p className="opacity-70"
+                    style={{ color: theme === "dark" ? "white" : "#333333" }}
+                  >
+                    Core PDF utilities for everyday document tasks.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPdfTools.map((agent, index) => (
+                    <motion.div
+                      key={agent.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                    >
+                      <AgentCard 
+                        agent={agent} 
+                        colorTheme={colorTheme}
+                        isBookmarked={bookmarkedTools.includes(agent.id)}
+                        onToggleBookmark={toggleBookmark}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </>
+            )}
           </motion.section>
 
           <motion.section
@@ -284,31 +358,59 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-2"
+            {filteredAdvancedPdfTools.length > 0 && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold mb-2"
+                    style={{ color: theme === "dark" ? "white" : "#333333" }}
+                  >
+                    Advanced PDF Tools
+                  </h2>
+                  <p className="opacity-70"
+                    style={{ color: theme === "dark" ? "white" : "#333333" }}
+                  >
+                    Professional PDF editing, conversion, and security tools.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredAdvancedPdfTools.map((agent, index) => (
+                    <motion.div
+                      key={agent.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
+                    >
+                      <AgentCard agent={agent} colorTheme={colorTheme} />
+                    </motion.div>
+                  ))}
+                </div>
+              </>
+            )}
+          </motion.section>
+
+          {/* No results message */}
+          {filteredPdfTools.length === 0 && filteredAdvancedPdfTools.length === 0 && searchTerm && (
+            <motion.div
+              className="text-center py-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Search className="w-16 h-16 mx-auto mb-4 opacity-30"
+                style={{ color: theme === "dark" ? "white" : "#333333" }}
+              />
+              <h3 className="text-xl font-medium mb-2"
                 style={{ color: theme === "dark" ? "white" : "#333333" }}
               >
-                Advanced PDF Tools
-              </h2>
+                No tools found
+              </h3>
               <p className="opacity-70"
                 style={{ color: theme === "dark" ? "white" : "#333333" }}
               >
-                Professional PDF editing, conversion, and security tools.
+                Try adjusting your search terms to find the PDF tool you&apos;re looking for.
               </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {advancedPdfTools.map((agent, index) => (
-                <motion.div
-                  key={agent.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
-                >
-                  <AgentCard agent={agent} colorTheme={colorTheme} />
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

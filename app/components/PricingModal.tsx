@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Button } from "@/app/components/ui/button"
+import { Card } from "@/app/components/ui/card"
 import { Check, X } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -17,7 +17,7 @@ interface ColorTheme {
 
 interface PricingModalProps {
   isOpen: boolean
-  onClose: () => void
+  onCloseAction: () => void
   colorTheme: ColorTheme
 }
 
@@ -29,14 +29,14 @@ const defaultTheme: ColorTheme = {
   background: "from-blue-950 to-cyan-950",
 }
 
-export default function PricingModal({ isOpen, onClose, colorTheme = defaultTheme }: PricingModalProps) {
+export default function PricingModal({ isOpen, onCloseAction, colorTheme = defaultTheme }: PricingModalProps) {
   const { theme } = useTheme()
   const [isAnnual, setIsAnnual] = useState(false)
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseAction()
       }
     }
 
@@ -66,7 +66,7 @@ export default function PricingModal({ isOpen, onClose, colorTheme = defaultThem
         document.head.removeChild(existingStyle)
       }
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onCloseAction])
 
   const plans = [
     {
@@ -168,7 +168,7 @@ export default function PricingModal({ isOpen, onClose, colorTheme = defaultThem
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={onCloseAction}
           />
 
           {/* Modal Content */}
@@ -190,7 +190,7 @@ export default function PricingModal({ isOpen, onClose, colorTheme = defaultThem
           >
             {/* Close Button */}
             <button
-              onClick={onClose}
+              onClick={onCloseAction}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-all duration-200 z-10"
               style={{ color: theme === "dark" ? "white" : "#333333" }}
             >

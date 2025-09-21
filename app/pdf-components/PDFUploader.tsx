@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/app/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';

@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import { useColorTheme } from '@/lib/use-color-theme'
 import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { AgentCard } from "@/components/agent-card"
+import { Button } from "@/app/components/ui/button"
+import { Input } from "@/app/components/ui/input"
+import { AgentCard } from "@/app/components/agent-card"
 import ThemeCustomizer from '../components/theme-customizer'
 import ThemeToggle from '../components/theme-toggle'
 import { 

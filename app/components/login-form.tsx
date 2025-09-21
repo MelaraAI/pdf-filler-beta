@@ -1,252 +1,159 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/app/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
-import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-interface ColorTheme {
-  name: string
-  primary: string
-  secondary: string
-  accent: string
-  background: string
-}
-
-interface LoginFormProps {
-  onCancelAction: () => void
-  onSignUpRedirect?: () => void
-  colorTheme: ColorTheme
-  preventAutoRedirect?: boolean // Add this to prevent auto-redirect when shown as modal
-}
-
-export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme, preventAutoRedirect = false }: LoginFormProps) {
-  const { theme } = useTheme()
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMessage("")
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (!error && data.user) {
-      router.push("/dashboard")
-    } else {
-      setErrorMessage("Invalid email or password. Please try again.")
-    }
-
-    setIsLoading(false)
-  }
-
-
-  // Only redirect after successful login form submission - no auto-redirects
-  useEffect(() => {
-    // Skip all auto-redirects if this is shown as a modal
-    if (preventAutoRedirect) {
-      console.log("[LOGIN DEBUG] Auto-redirect prevented - login form shown as modal");
+    if (!email) {
+      setError("Please enter your email address");
       return;
     }
 
-    // Only listen for auth changes, don't check existing session
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[LOGIN DEBUG] Auth state changed:", event, session?.user?.email || "No user");
-      if (session) {
-        console.log("[LOGIN DEBUG] Full session details:", {
-          userId: session.user.id,
-          userEmail: session.user.email,
-          accessToken: session.access_token ? "Present" : "Missing",
-          refreshToken: session.refresh_token ? "Present" : "Missing",
-          expiresAt: session.expires_at,
-          tokenType: session.token_type
-        });
-      }
-      // Only redirect on sign in events, not existing sessions
-      if (event === 'SIGNED_IN' && session) {
-        console.log("[LOGIN DEBUG] User signed in, redirecting to dashboard");
-        router.push("/dashboard")
-      }
-    })
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
-    return () => {
-      listener.subscription.unsubscribe()
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/pdf-components/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+      
+      setError("Check your email for the login link!");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
-  }, [router, preventAutoRedirect])
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      // Update this route to redirect to PDF dashboard
+      router.push("/pdf-components/dashboard");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <motion.div
-      className="overflow-hidden rounded-3xl bg-white/5 dark:bg-white/5 bg-white/80 p-8 backdrop-blur-lg border border-white/10 dark:border-white/10 border-slate-200/50"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{
-        boxShadow: `0 25px 50px ${colorTheme.primary}20`,
-        transition: { duration: 0.3 },
-      }}
-    >
-      <div className="mb-6 flex items-center">
-        <motion.div whileHover={{ scale: 1.1, rotate: -10 }} whileTap={{ scale: 0.9 }}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`mr-2 rounded-full ${theme === 'dark' ? 'text-white hover:text-white' : 'text-gray-800 hover:text-slate-900'} hover:bg-white/10 dark:hover:bg-white/10 hover:bg-slate-200/50`}
-            onClick={onCancelAction}
-          >
-            <ArrowLeft className="h-5 w-5" />
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Back to Home Button */}
+      <div className="flex justify-start">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
           </Button>
-        </motion.div>
-        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Login to Access</h2>
+        </Link>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {errorMessage && (
-          <motion.div
-            className="text-red-500 bg-red-900/20 px-4 py-3 rounded-xl text-center font-medium border border-red-500/30"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {errorMessage}
-          </motion.div>
-        )}
-
-        <motion.div
-          className="space-y-2"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-        >
-              <Label htmlFor="email" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                Email
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }}>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin}>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
+                  placeholder="m@example.com"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
                 />
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              className="space-y-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-            >
-              <Label htmlFor="password" className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                Password
-              </Label>
-              <motion.div whileFocus={{ scale: 1.02 }} transition={{ type: "spring", damping: 20, stiffness: 300 }} className="relative">
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  className={`rounded-xl border-white/10 dark:border-white/10 border-slate-300/50 bg-white/5 dark:bg-white/5 bg-white/50 px-4 py-6 pr-12 ${theme === 'dark' ? 'text-white' : 'text-gray-800'} placeholder:text-slate-400 dark:placeholder:text-slate-400 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-indigo-400 transition-all duration-300`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
-                >
-                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
-              </motion.div>
-              <motion.div
-                className="text-right"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <button
-                  type="button"
-                  className={`text-sm underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-                  onClick={() => {
-                    // Add forgot password logic here
-                    console.log("Forgot password clicked")
-                  }}
-                >
-                  Forgot password?
-                </button>
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 15px 40px ${colorTheme.primary}30`,
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-xl py-6 text-lg font-medium text-white transition-all duration-300"
-                style={{
-                  background: `linear-gradient(135deg, ${colorTheme.primary}, ${colorTheme.secondary})`,
-                  boxShadow: `0 10px 30px ${colorTheme.primary}20`,
-                }}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging in...
-                  </>
-                ) : (
-                  "Login"
-                )}
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
-            </motion.div>
-            
-            {/* Sign-up link */}
-            <motion.div
-              className="text-center mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-            >
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                Don&apos;t have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => onSignUpRedirect?.()}
-                  className={`font-medium underline hover:no-underline transition-all duration-200 ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-                >
-                  Sign up
-                </button>
-              </p>
-            </motion.div>
-      </form>
-    </motion.div>
-  )
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleMagicLink}
+              >
+                Magic Link (Testing)
+              </Button>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/sign-up-styled"
+                className="underline underline-offset-4"
+              >
+                Sign up
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
-import { Button } from "@/components/ui/button"
+import { Button } from "@/app/components/ui/button"
 import LoginForm from '../components/login-form'
 import ThemeToggle from '../components/theme-toggle'
 import ThemeCustomizer from '../components/theme-customizer'

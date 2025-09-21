@@ -6,17 +6,17 @@ import { FileText, Home, Plus, X, Merge } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import SaucyLoader from '../components/SaucyLoader';
+import SaucyLoader from '../../components/SaucyLoader';
 import { Button } from '@/app/components/ui/button';
 import { useModifiedDocsSubscription } from '@/hooks/UseModifiedDocsSubscription';
 import { PDFDocument } from 'pdf-lib';
-import { PDFPreview } from '../pdf-components/PDFPreview';
+import { PDFPreview } from '../../pdf-components/PDFPreview';
 
 // Lazy load heavy components
 const ThemeToggle = lazy(() => import('@/app/components/theme-toggle'));
 const ThemeCustomizer = lazy(() => import('@/app/components/theme-customizer'));
 const UserAvatar = lazy(() => import('@/app/components/UserAvatar'));
-const DownloadPopup = lazy(() => import('../pdf-components/DownloadPopup').then(module => ({ default: module.DownloadPopup })));
+const DownloadPopup = lazy(() => import('../../pdf-components/DownloadPopup').then(module => ({ default: module.DownloadPopup })));
 
 const defaultTheme = {
   name: 'Ocean',
