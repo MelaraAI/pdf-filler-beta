@@ -318,13 +318,12 @@ const AutoFillInstructions = memo(function AutoFillInstructions({
         <textarea
           value={instructions}
           onChange={handleInstructionsChange}
-          placeholder={`Enter field-value pairs, one per line. Examples:\nNamed Insured: Vincent Melara\nRequested Effective Date: 01/15/2024\nCompany Phone: (555) 123-4567\nPhysical U.S. Address: 123 Main St, City, ST 12345\n\nYou can also manually edit fields below and click 'Apply Changes to PDF' to update the document preview.`}
+          placeholder={`Enter field-value pairs, one per line. Examples:\nName: John Doe\nEffective Date: 01/15/2025\nCompany Phone: (555) 123-4567\nAddress: 123 Main St, City, ST 12345\n`}
           className="w-full flex-1 border border-slate-300/50 dark:border-slate-600/50 rounded-lg p-4 text-sm bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 resize-none text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400"
         />
 
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
           Use format: &quot;Field Name: Value&quot; or &quot;Field Name = Value&quot;, one per line.
-          Click &quot;Apply Changes to PDF&quot; to update the preview with all field values.
         </p>
 
         {/* Flex row for button and voice widget */}
