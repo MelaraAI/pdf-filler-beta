@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Home } from 'lucide-react';
+import { FileText, 
+  // Home 
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -151,9 +153,9 @@ function App() {
     }
   }, [signOut]);
 
-  const handleGoHome = useCallback(() => {
-    router.push('/dashboard');
-  }, [router]);
+  // const handleGoHome = useCallback(() => {
+  //   router.push('/dashboard');
+  // }, [router]);
 
   if (isLoading) {
     return (
@@ -195,7 +197,7 @@ function App() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <motion.button
+            {/* <motion.button
               onClick={handleGoHome}
               className="p-2 rounded-lg border hover:bg-white/10 dark:hover:bg-slate-700/30 transition-all duration-200"
               style={{
@@ -207,7 +209,7 @@ function App() {
               title="Back to PDF Tools"
             >
               <Home className="w-5 h-5" style={{ color: colorTheme.secondary }} />
-            </motion.button>
+            </motion.button> */}
             <div
               className="p-2 rounded-lg border"
               style={{

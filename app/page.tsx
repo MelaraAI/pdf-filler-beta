@@ -7,6 +7,8 @@ import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import SaucyLoader from "@/app/components/SaucyLoader";
+// Import auth hook to detect logged-in user and redirect
+import { useAuth } from '@/lib/auth/AuthContext';
 
 // Lazy load heavy components with better splitting
 const LoginForm = lazy(() => import("@/app/components/login-form"));
@@ -32,17 +34,23 @@ export default function Home() {
   const [showSignUp, setShowSignUp] = useState(false);
   const [colorTheme, setColorTheme] = useState(defaultTheme);
   const [loading, setLoading] = useState(true);
+  const { user, isLoading: authLoading } = useAuth();
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Check loading state only - no auto redirect
+  // Redirect logged-in users directly to the PDF filler page for faster access
   useEffect(() => {
-    const checkUser = async () => {
-      // Just check loading state, don't auto-redirect
-      setLoading(false);
-    };
+    // wait for auth to finish initializing
+    if (authLoading) return;
 
-    checkUser();
-  }, []);
+    if (user) {
+      // If user is logged in, navigate to the PDF filler route and skip dashboard
+      window.location.href = '/pdf-components/dashboard';
+      return;
+    }
+
+    // No user: stop loading and show homepage
+    setLoading(false);
+  }, [user, authLoading]);
 
   useEffect(() => {
     const saved = localStorage.getItem("colorTheme");

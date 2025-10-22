@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -41,6 +41,10 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
 
+  // reference onCancelAction to avoid unused prop lint warning (no-op here)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _onCancel = onCancelAction
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -52,7 +56,8 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
     })
 
     if (!error && data.user) {
-      router.push("/dashboard")
+      // Redirect to the PDF form filler page instead of the dashboard/home
+      router.push("/pdf-components/dashboard")
     } else {
       setErrorMessage("Invalid email or password. Please try again.")
     }
@@ -106,6 +111,11 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
       }}
     >
       <div className="mb-6 flex items-center">
+        {/**
+         * Top-left home/back icon commented out to prevent accidental redirects.
+         * If you need the back button later, remove the JSX comment markers below.
+         */}
+        {/*
         <motion.div whileHover={{ scale: 1.1, rotate: -10 }} whileTap={{ scale: 0.9 }}>
           <Button
             variant="ghost"
@@ -116,6 +126,7 @@ export default function LoginForm({ onCancelAction, onSignUpRedirect, colorTheme
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </motion.div>
+        */}
         <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Login to Access</h2>
       </div>
 
