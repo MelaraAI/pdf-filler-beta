@@ -17,6 +17,7 @@ const SimplePDFViewer = lazy(() => import('../SimplePDFViewer').then(module => (
 const DownloadPopup = lazy(() => import('../DownloadPopup').then(module => ({ default: module.DownloadPopup })));
 
 import { useModifiedDocsSubscription } from '@/hooks/UseModifiedDocsSubscription';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 
 
@@ -264,5 +265,10 @@ function App() {
 }
 
 export default function ProtectedDashboard() {
-  return <App />;
+  // Wrap App with ProtectedRoute to ensure client-side route guarding
+  return (
+    <ProtectedRoute>
+      <App />
+    </ProtectedRoute>
+  );
 }
